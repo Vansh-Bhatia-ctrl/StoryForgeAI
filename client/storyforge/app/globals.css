@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+:root {
+}
+
+@theme inline {
+  --color-custom-gray-100: #041424;
+  --color-custom-gray-200: #030e1a;
+  --color-custom-gray-300: #111827;
+  --color-custom-gray-400: #4b5563;
+  --color-custom-gray-500: #6b7280;
+  --color-custom-gray-500: #1a2233;
+  --color-custom-gray-600: #0a0e23;
+  --color-custom-gray-700: #141833;
+  --color-custom-gray-800: #1e2340;
+}
