@@ -2,9 +2,11 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Eye, EyeOff, Loader2, Lock, Mail, User } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import useAuthentication from "../store/useAuthentication";
 
 const page = () => {
+  const router = useRouter();
   const [isSignUpSelected, setIsSignupSelected] = useState(false);
   const [isLoading, setIssLoading] = useState(true);
   const [passwordIsShowing, setPasswordIsShowing] = useState(false);
@@ -13,7 +15,7 @@ const page = () => {
     email: "",
     password: "",
   });
-  const { signUp, login, error, loading } = useAuthentication();
+  const { signUp, login, error, loading, loggedIn } = useAuthentication();
   useEffect(() => {
     const timer = setTimeout(() => {
       setIssLoading(false);
@@ -21,6 +23,11 @@ const page = () => {
 
     return () => clearTimeout(timer);
   }, []);
+  useEffect(() => {
+    if (!isLoading && loggedIn) {
+      router.push("/stories");
+    }
+  }, [loggedIn, isLoading, router]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -161,7 +168,13 @@ const page = () => {
                   disabled={loading}
                   className="text-white font-semibold bg-blue-700 p-2 w-full rounded-lg text-lg hover:bg-blue-800 transition-all duration-300 hover:scale-103"
                 >
-                  {isSignUpSelected ? "Create Account" : "Sign In"}
+                  {isSignUpSelected
+                    ? loading
+                      ? "Creating Account..."
+                      : "Create Account"
+                    : loading
+                    ? "Signing In ..."
+                    : "Sign In"}
                 </button>
               </div>
             </form>
