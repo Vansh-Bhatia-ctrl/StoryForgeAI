@@ -19,6 +19,8 @@ const verifyToken = (token) => {
     if (decoded.type !== "access") {
       throw new Error("Invalid token type");
     }
+
+    return decoded;
   } catch (error) {
     if (error.name === "TokenExpiredError") {
       throw new Error("Token has expired");
