@@ -979,425 +979,461 @@
 
 
 //STORY EDITOR PAGE
-// "use client";
-// import React, { useState, useRef } from 'react';
-// import { 
-//   Save, 
-//   Download, 
-//   Users, 
-//   Plus, 
-//   Trash2, 
-//   ZoomIn, 
-//   ZoomOut, 
-//   Sparkles,
-//   GitBranch,
-//   MessageSquare,
-//   Settings,
-//   ChevronLeft,
-//   ChevronRight
-// } from 'lucide-react';
-// import { motion, AnimatePresence } from 'framer-motion';
+"use client";
+import React, { useState, useCallback } from 'react';
+import ReactFlow, {
+  MiniMap,
+  Controls,
+  Background,
+  useNodesState,
+  useEdgesState,
+  addEdge,
+  Panel,
+} from 'reactflow';
+import 'reactflow/dist/style.css';
+import {
+  Menu,
+  X,
+  Plus,
+  Save,
+  Users,
+  Sparkles,
+  Settings,
+  Play,
+  MessageSquare,
+  FileText,
+  GitBranch,
+  Zap,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// const StoryEditor = () => {
-//   const [nodes, setNodes] = useState([
-//     { id: 1, x: 100, y: 100, title: 'Story Start', content: 'The hero awakens in a mysterious forest...', type: 'start' },
-//     { id: 2, x: 400, y: 80, title: 'Choice A', content: 'Investigate the strange sounds', type: 'choice' },
-//     { id: 3, x: 400, y: 200, title: 'Choice B', content: 'Follow the path ahead', type: 'choice' }
-//   ]);
-  
-//   const [connections, setConnections] = useState([
-//     { from: 1, to: 2 },
-//     { from: 1, to: 3 }
-//   ]);
-  
-//   const [selectedNode, setSelectedNode] = useState(null);
-//   const [dragging, setDragging] = useState(null);
-//   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
-//   const [rightPanelOpen, setRightPanelOpen] = useState(true);
-//   const [aiPanelOpen, setAiPanelOpen] = useState(false);
-//   const [zoom, setZoom] = useState(1);
-  
-//   const canvasRef = useRef(null);
+// Initial nodes for the story
+const initialNodes = [
+  {
+    id: '1',
+    type: 'default',
+    data: { label: 'Story Start: Kratos awakens' },
+    position: { x: 250, y: 50 },
+    style: {
+      background: '#1e3a5f',
+      color: '#fff',
+      border: '1px solid #3b82f6',
+      borderRadius: '8px',
+      padding: '10px',
+    },
+  },
+  {
+    id: '2',
+    type: 'default',
+    data: { label: 'Choice: Seek revenge or find peace?' },
+    position: { x: 250, y: 150 },
+    style: {
+      background: '#1e3a5f',
+      color: '#fff',
+      border: '1px solid #3b82f6',
+      borderRadius: '8px',
+      padding: '10px',
+    },
+  },
+  {
+    id: '3',
+    type: 'default',
+    data: { label: 'Path A: Seek Revenge' },
+    position: { x: 100, y: 250 },
+    style: {
+      background: '#1e3a5f',
+      color: '#fff',
+      border: '1px solid #3b82f6',
+      borderRadius: '8px',
+      padding: '10px',
+    },
+  },
+  {
+    id: '4',
+    type: 'default',
+    data: { label: 'Path B: Find Peace' },
+    position: { x: 400, y: 250 },
+    style: {
+      background: '#1e3a5f',
+      color: '#fff',
+      border: '1px solid #3b82f6',
+      borderRadius: '8px',
+      padding: '10px',
+    },
+  },
+];
 
-//   // Collaborative users (mock data)
-//   const collaborators = [
-//     { id: 1, name: 'John', color: '#3b82f6' },
-//     { id: 2, name: 'Sarah', color: '#8b5cf6' }
-//   ];
+const initialEdges = [
+  { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: '#3b82f6' } },
+  { id: 'e2-3', source: '2', target: '3', animated: true, style: { stroke: '#3b82f6' } },
+  { id: 'e2-4', source: '2', target: '4', animated: true, style: { stroke: '#3b82f6' } },
+];
 
-//   const handleNodeDrag = (nodeId, e) => {
-//     if (dragging) {
-//       const rect = canvasRef.current.getBoundingClientRect();
-//       const x = (e.clientX - rect.left) / zoom;
-//       const y = (e.clientY - rect.top) / zoom;
-      
-//       setNodes(nodes.map(node => 
-//         node.id === nodeId ? { ...node, x: x - 75, y: y - 40 } : node
-//       ));
-//     }
-//   };
+// Mock collaborators
+const collaborators = [
+  { id: 1, name: 'John Doe', avatar: 'JD', color: '#3b82f6', online: true },
+  { id: 2, name: 'Jane Smith', avatar: 'JS', color: '#8b5cf6', online: true },
+  { id: 3, name: 'Mike Wilson', avatar: 'MW', color: '#10b981', online: false },
+];
 
-//   const addNode = () => {
-//     const newNode = {
-//       id: Date.now(),
-//       x: 300,
-//       y: 300,
-//       title: 'New Node',
-//       content: 'Enter your story content here...',
-//       type: 'choice'
-//     };
-//     setNodes([...nodes, newNode]);
-//   };
+const StoryEditor = () => {
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState('nodes'); // 'nodes', 'ai', 'collab'
+  const [selectedNode, setSelectedNode] = useState(null);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [showCollaborators, setShowCollaborators] = useState(true);
+  const [chatMessages, setChatMessages] = useState([
+    { id: 1, user: 'John Doe', message: 'Added new revenge path', time: '2m ago' },
+    { id: 2, user: 'Jane Smith', message: 'Updated character dialogue', time: '5m ago' },
+  ]);
 
-//   const deleteNode = (nodeId) => {
-//     setNodes(nodes.filter(n => n.id !== nodeId));
-//     setConnections(connections.filter(c => c.from !== nodeId && c.to !== nodeId));
-//     if (selectedNode?.id === nodeId) setSelectedNode(null);
-//   };
+  const onConnect = useCallback(
+    (params) => setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: '#3b82f6' } }, eds)),
+    [setEdges]
+  );
 
-//   const updateNodeContent = (field, value) => {
-//     if (!selectedNode) return;
-//     setNodes(nodes.map(node => 
-//       node.id === selectedNode.id ? { ...node, [field]: value } : node
-//     ));
-//     setSelectedNode({ ...selectedNode, [field]: value });
-//   };
+  const onNodeClick = useCallback((event, node) => {
+    setSelectedNode(node);
+    setActiveTab('nodes');
+  }, []);
 
-//   return (
-//     <div className="h-screen bg-gray-950 text-gray-100 flex flex-col overflow-hidden pt-20">
-//       {/* Top Navigation */}
-//       <header className="bg-gray-900 border-b border-gray-800 px-6 py-3 flex items-center justify-between">
-//         <div className="flex items-center gap-4">
-//           <div className="flex items-center gap-2">
-//             <GitBranch className="w-5 h-5 text-blue-400" />
-//             <h1 className="text-lg font-semibold">The Lost Kingdom</h1>
-//           </div>
-//           <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">
-//             Auto-saved 2m ago
-//           </span>
-//         </div>
+  const addNewNode = () => {
+    const newNode = {
+      id: `${nodes.length + 1}`,
+      type: 'default',
+      data: { label: `New Node ${nodes.length + 1}` },
+      position: { x: Math.random() * 400, y: Math.random() * 400 },
+      style: {
+        background: '#1e3a5f',
+        color: '#fff',
+        border: '1px solid #3b82f6',
+        borderRadius: '8px',
+        padding: '10px',
+      },
+    };
+    setNodes((nds) => [...nds, newNode]);
+  };
 
-//         <div className="flex items-center gap-3">
-//           {/* Collaborators */}
-//           <div className="flex items-center gap-2">
-//             <Users className="w-4 h-4 text-gray-400" />
-//             <div className="flex -space-x-2">
-//               {collaborators.map(user => (
-//                 <div 
-//                   key={user.id}
-//                   className="w-8 h-8 rounded-full border-2 border-gray-900 flex items-center justify-center text-xs font-medium"
-//                   style={{ backgroundColor: user.color }}
-//                 >
-//                   {user.name[0]}
-//                 </div>
-//               ))}
-//             </div>
-//           </div>
+  const handleAiGenerate = () => {
+    if (!aiPrompt.trim()) return;
+    // Simulate AI response
+    alert(`AI will generate content for: "${aiPrompt}"`);
+    setAiPrompt('');
+  };
 
-//           <button className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg flex items-center gap-2 transition-colors">
-//             <Save className="w-4 h-4" />
-//             Save
-//           </button>
+  return (
+    <div className="h-screen bg-[#0a1628] text-white flex flex-col pt-20">
+      {/* Header */}
+      <header className="bg-[#0d1b2a] border-b border-slate-800 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold">God Of War</h1>
+                <p className="text-xs text-slate-400">Last saved 2 minutes ago</p>
+              </div>
+            </div>
+          </div>
 
-//           <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 transition-colors">
-//             <Download className="w-4 h-4" />
-//             Export
-//           </button>
-//         </div>
-//       </header>
+          <div className="flex items-center gap-3">
+            {/* Collaborators */}
+            <div className="flex items-center gap-2">
+              {collaborators.slice(0, 3).map((collab) => (
+                <div
+                  key={collab.id}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold relative"
+                  style={{ backgroundColor: collab.color }}
+                  title={collab.name}
+                >
+                  {collab.avatar}
+                  {collab.online && (
+                    <div className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 rounded-full border-2 border-[#0d1b2a]"></div>
+                  )}
+                </div>
+              ))}
+              <button className="w-8 h-8 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-xs">
+                +2
+              </button>
+            </div>
 
-//       <div className="flex-1 flex overflow-hidden">
-//         {/* Left Sidebar - Story Nodes List */}
-//         <AnimatePresence>
-//           {leftSidebarOpen && (
-//             <motion.aside 
-//               initial={{ x: -300 }}
-//               animate={{ x: 0 }}
-//               exit={{ x: -300 }}
-//               className="w-64 bg-gray-900 border-r border-gray-800 p-4 overflow-y-auto"
-//             >
-//               <div className="flex items-center justify-between mb-4">
-//                 <h2 className="font-semibold text-sm text-gray-400 uppercase tracking-wide">Story Nodes</h2>
-//                 <button onClick={() => setLeftSidebarOpen(false)} className="text-gray-500 hover:text-gray-300">
-//                   <ChevronLeft className="w-4 h-4" />
-//                 </button>
-//               </div>
+            <button className="p-2 hover:bg-slate-700 rounded transition-colors">
+              <Users className="w-5 h-5" />
+            </button>
+            <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors flex items-center gap-2">
+              <Save className="w-4 h-4" />
+              Save
+            </button>
+            <button className="p-2 hover:bg-slate-700 rounded transition-colors">
+              <Settings className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </header>
 
-//               <div className="space-y-2">
-//                 {nodes.map(node => (
-//                   <motion.button
-//                     key={node.id}
-//                     whileHover={{ scale: 1.02 }}
-//                     onClick={() => setSelectedNode(node)}
-//                     className={`w-full text-left p-3 rounded-lg transition-colors ${
-//                       selectedNode?.id === node.id 
-//                         ? 'bg-blue-600 text-white' 
-//                         : 'bg-gray-800 hover:bg-gray-750 text-gray-300'
-//                     }`}
-//                   >
-//                     <div className="font-medium text-sm">{node.title}</div>
-//                     <div className="text-xs text-gray-400 mt-1 truncate">
-//                       {node.content.substring(0, 40)}...
-//                     </div>
-//                   </motion.button>
-//                 ))}
-//               </div>
-//             </motion.aside>
-//           )}
-//         </AnimatePresence>
+      {/* Main Content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Canvas Area */}
+        <div className="flex-1 relative">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onNodeClick={onNodeClick}
+            fitView
+            style={{ background: '#0a1628' }}
+          >
+            <Controls className="bg-[#0d1b2a] border border-slate-700" />
+            <MiniMap
+              nodeColor="#1e3a5f"
+              maskColor="rgba(10, 22, 40, 0.8)"
+              className="bg-[#0d1b2a] border border-slate-700"
+            />
+            <Background color="#1e3a5f" gap={16} />
+            
+            <Panel position="top-left" className="space-x-2">
+              <button
+                onClick={addNewNode}
+                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded flex items-center gap-2 text-sm transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Add Node
+              </button>
+              <button className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded flex items-center gap-2 text-sm transition-colors">
+                <Play className="w-4 h-4" />
+                Preview
+              </button>
+            </Panel>
+          </ReactFlow>
 
-//         {!leftSidebarOpen && (
-//           <button 
-//             onClick={() => setLeftSidebarOpen(true)}
-//             className="absolute left-4 top-20 z-10 bg-gray-800 p-2 rounded-lg hover:bg-gray-700"
-//           >
-//             <ChevronRight className="w-4 h-4" />
-//           </button>
-//         )}
+          {/* Toggle Sidebar Button */}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="absolute top-4 right-4 p-2 bg-slate-700 hover:bg-slate-600 rounded transition-colors z-10"
+          >
+            {sidebarOpen ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+          </button>
+        </div>
 
-//         {/* Main Canvas */}
-//         <main className="flex-1 relative bg-gray-950 overflow-hidden">
-//           {/* Canvas Controls */}
-//           <div className="absolute top-4 right-4 z-10 flex gap-2">
-//             <button 
-//               onClick={() => setZoom(Math.min(zoom + 0.1, 2))}
-//               className="bg-gray-800 p-2 rounded-lg hover:bg-gray-700"
-//             >
-//               <ZoomIn className="w-4 h-4" />
-//             </button>
-//             <button 
-//               onClick={() => setZoom(Math.max(zoom - 0.1, 0.5))}
-//               className="bg-gray-800 p-2 rounded-lg hover:bg-gray-700"
-//             >
-//               <ZoomOut className="w-4 h-4" />
-//             </button>
-//           </div>
+        {/* Right Sidebar */}
+        <AnimatePresence>
+          {sidebarOpen && (
+            <motion.div
+              initial={{ x: 400, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 400, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="w-96 bg-[#0d1b2a] border-l border-slate-800 flex flex-col"
+            >
+              {/* Tabs */}
+              <div className="flex border-b border-slate-800">
+                <button
+                  onClick={() => setActiveTab('nodes')}
+                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                    activeTab === 'nodes'
+                      ? 'text-blue-400 border-b-2 border-blue-400'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <GitBranch className="w-4 h-4 inline mr-2" />
+                  Nodes
+                </button>
+                <button
+                  onClick={() => setActiveTab('ai')}
+                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                    activeTab === 'ai'
+                      ? 'text-blue-400 border-b-2 border-blue-400'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Sparkles className="w-4 h-4 inline mr-2" />
+                  AI Assistant
+                </button>
+                <button
+                  onClick={() => setActiveTab('collab')}
+                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                    activeTab === 'collab'
+                      ? 'text-blue-400 border-b-2 border-blue-400'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <MessageSquare className="w-4 h-4 inline mr-2" />
+                  Chat
+                </button>
+              </div>
 
-//           {/* Canvas */}
-//           <div 
-//             ref={canvasRef}
-//             className="w-full h-full relative"
-//             style={{ 
-//               backgroundImage: 'radial-gradient(circle, #1f2937 1px, transparent 1px)',
-//               backgroundSize: '30px 30px',
-//               backgroundPosition: 'center center'
-//             }}
-//             onMouseMove={(e) => dragging && handleNodeDrag(dragging, e)}
-//             onMouseUp={() => setDragging(null)}
-//           >
-//             <svg className="absolute inset-0 w-full h-full pointer-events-none">
-//               {connections.map((conn, idx) => {
-//                 const fromNode = nodes.find(n => n.id === conn.from);
-//                 const toNode = nodes.find(n => n.id === conn.to);
-//                 if (!fromNode || !toNode) return null;
+              {/* Tab Content */}
+              <div className="flex-1 overflow-y-auto p-4">
+                {activeTab === 'nodes' && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Node Editor</h3>
+                    {selectedNode ? (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm text-slate-400 mb-2">Node ID</label>
+                          <input
+                            type="text"
+                            value={selectedNode.id}
+                            disabled
+                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-slate-400"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-slate-400 mb-2">Label</label>
+                          <textarea
+                            value={selectedNode.data.label}
+                            onChange={(e) => {
+                              setNodes((nds) =>
+                                nds.map((n) =>
+                                  n.id === selectedNode.id
+                                    ? { ...n, data: { ...n.data, label: e.target.value } }
+                                    : n
+                                )
+                              );
+                              setSelectedNode({
+                                ...selectedNode,
+                                data: { ...selectedNode.data, label: e.target.value },
+                              });
+                            }}
+                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white resize-none"
+                            rows={4}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-slate-400 mb-2">Content</label>
+                          <textarea
+                            placeholder="Add detailed scene content here..."
+                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white resize-none"
+                            rows={6}
+                          />
+                        </div>
+                        <button className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition-colors">
+                          Delete Node
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-slate-400">
+                        <GitBranch className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p>Select a node to edit</p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
-//                 const x1 = (fromNode.x + 75) * zoom;
-//                 const y1 = (fromNode.y + 40) * zoom;
-//                 const x2 = (toNode.x + 75) * zoom;
-//                 const y2 = (toNode.y + 40) * zoom;
+                {activeTab === 'ai' && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-blue-400" />
+                      AI Assistant
+                    </h3>
+                    <div>
+                      <label className="block text-sm text-slate-400 mb-2">What do you want to create?</label>
+                      <textarea
+                        value={aiPrompt}
+                        onChange={(e) => setAiPrompt(e.target.value)}
+                        placeholder="E.g., 'Generate a dramatic confrontation scene between Kratos and Thor'"
+                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white resize-none"
+                        rows={4}
+                      />
+                    </div>
+                    <button
+                      onClick={handleAiGenerate}
+                      className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Zap className="w-4 h-4" />
+                      Generate with AI
+                    </button>
 
-//                 return (
-//                   <line
-//                     key={idx}
-//                     x1={x1}
-//                     y1={y1}
-//                     x2={x2}
-//                     y2={y2}
-//                     stroke="#4b5563"
-//                     strokeWidth="2"
-//                     strokeDasharray="5,5"
-//                   />
-//                 );
-//               })}
-//             </svg>
+                    <div className="pt-4 border-t border-slate-800">
+                      <h4 className="text-sm font-semibold mb-3">Quick Actions</h4>
+                      <div className="space-y-2">
+                        <button className="w-full px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded text-left text-sm transition-colors">
+                          📝 Generate dialogue
+                        </button>
+                        <button className="w-full px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded text-left text-sm transition-colors">
+                          🎭 Create character backstory
+                        </button>
+                        <button className="w-full px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded text-left text-sm transition-colors">
+                          🌍 Build world lore
+                        </button>
+                        <button className="w-full px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded text-left text-sm transition-colors">
+                          ⚔️ Design combat scene
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-//             {nodes.map(node => (
-//               <motion.div
-//                 key={node.id}
-//                 drag
-//                 dragMomentum={false}
-//                 onMouseDown={() => setDragging(node.id)}
-//                 onClick={() => setSelectedNode(node)}
-//                 style={{ 
-//                   x: node.x * zoom, 
-//                   y: node.y * zoom,
-//                   scale: zoom
-//                 }}
-//                 className={`absolute w-36 bg-gray-800 rounded-lg border-2 cursor-move shadow-lg ${
-//                   selectedNode?.id === node.id ? 'border-blue-500' : 'border-gray-700'
-//                 } ${node.type === 'start' ? 'border-green-500' : ''}`}
-//               >
-//                 <div className="p-3">
-//                   <div className="flex items-center justify-between mb-2">
-//                     <div className="text-xs font-semibold truncate">{node.title}</div>
-//                     <button 
-//                       onClick={(e) => {
-//                         e.stopPropagation();
-//                         deleteNode(node.id);
-//                       }}
-//                       className="text-red-400 hover:text-red-300"
-//                     >
-//                       <Trash2 className="w-3 h-3" />
-//                     </button>
-//                   </div>
-//                   <div className="text-xs text-gray-400 line-clamp-2">
-//                     {node.content}
-//                   </div>
-//                 </div>
-//               </motion.div>
-//             ))}
-//           </div>
+                {activeTab === 'collab' && (
+                  <div className="space-y-4 flex flex-col h-full">
+                    <h3 className="text-lg font-semibold">Team Chat</h3>
+                    
+                    {/* Active Collaborators */}
+                    <div className="space-y-2">
+                      <p className="text-xs text-slate-400 uppercase">Online Now (2)</p>
+                      {collaborators
+                        .filter((c) => c.online)
+                        .map((collab) => (
+                          <div key={collab.id} className="flex items-center gap-2 p-2 bg-slate-800 rounded">
+                            <div
+                              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold"
+                              style={{ backgroundColor: collab.color }}
+                            >
+                              {collab.avatar}
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium">{collab.name}</p>
+                              <p className="text-xs text-slate-400">Editing node 3</p>
+                            </div>
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          </div>
+                        ))}
+                    </div>
 
-//           {/* Bottom Toolbar */}
-//           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-900 border border-gray-800 rounded-lg shadow-xl p-2 flex gap-2">
-//             <button 
-//               onClick={addNode}
-//               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2"
-//             >
-//               <Plus className="w-4 h-4" />
-//               Add Node
-//             </button>
+                    {/* Chat Messages */}
+                    <div className="flex-1 space-y-3 overflow-y-auto">
+                      {chatMessages.map((msg) => (
+                        <div key={msg.id} className="p-3 bg-slate-800 rounded">
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-sm font-semibold">{msg.user}</p>
+                            <p className="text-xs text-slate-400">{msg.time}</p>
+                          </div>
+                          <p className="text-sm text-slate-300">{msg.message}</p>
+                        </div>
+                      ))}
+                    </div>
 
-//             <button 
-//               onClick={() => setAiPanelOpen(!aiPanelOpen)}
-//               className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg flex items-center gap-2"
-//             >
-//               <Sparkles className="w-4 h-4" />
-//               AI Assistant
-//             </button>
-//           </div>
-//         </main>
+                    {/* Message Input */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Type a message..."
+                        className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white"
+                      />
+                      <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors">
+                        Send
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+};
 
-//         {/* Right Panel - Node Properties */}
-//         <AnimatePresence>
-//           {rightPanelOpen && (
-//             <motion.aside 
-//               initial={{ x: 400 }}
-//               animate={{ x: 0 }}
-//               exit={{ x: 400 }}
-//               className="w-80 bg-gray-900 border-l border-gray-800 p-4 overflow-y-auto"
-//             >
-//               <div className="flex items-center justify-between mb-4">
-//                 <h2 className="font-semibold text-sm text-gray-400 uppercase tracking-wide">Properties</h2>
-//                 <button onClick={() => setRightPanelOpen(false)} className="text-gray-500 hover:text-gray-300">
-//                   <ChevronRight className="w-4 h-4" />
-//                 </button>
-//               </div>
-
-//               {selectedNode ? (
-//                 <div className="space-y-4">
-//                   <div>
-//                     <label className="block text-xs font-medium text-gray-400 mb-2">Title</label>
-//                     <input 
-//                       type="text"
-//                       value={selectedNode.title}
-//                       onChange={(e) => updateNodeContent('title', e.target.value)}
-//                       className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-//                     />
-//                   </div>
-
-//                   <div>
-//                     <label className="block text-xs font-medium text-gray-400 mb-2">Content</label>
-//                     <textarea 
-//                       value={selectedNode.content}
-//                       onChange={(e) => updateNodeContent('content', e.target.value)}
-//                       rows={6}
-//                       className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 resize-none"
-//                     />
-//                   </div>
-
-//                   <div>
-//                     <label className="block text-xs font-medium text-gray-400 mb-2">Node Type</label>
-//                     <select 
-//                       value={selectedNode.type}
-//                       onChange={(e) => updateNodeContent('type', e.target.value)}
-//                       className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-//                     >
-//                       <option value="start">Start</option>
-//                       <option value="choice">Choice</option>
-//                       <option value="dialogue">Dialogue</option>
-//                       <option value="end">End</option>
-//                     </select>
-//                   </div>
-
-//                   <button className="w-full bg-purple-600 hover:bg-purple-700 rounded-lg py-2 flex items-center justify-center gap-2">
-//                     <Sparkles className="w-4 h-4" />
-//                     Generate with AI
-//                   </button>
-//                 </div>
-//               ) : (
-//                 <div className="text-center text-gray-500 mt-12">
-//                   <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
-//                   <p>Select a node to edit</p>
-//                 </div>
-//               )}
-//             </motion.aside>
-//           )}
-//         </AnimatePresence>
-
-//         {!rightPanelOpen && (
-//           <button 
-//             onClick={() => setRightPanelOpen(true)}
-//             className="absolute right-4 top-20 z-10 bg-gray-800 p-2 rounded-lg hover:bg-gray-700"
-//           >
-//             <ChevronLeft className="w-4 h-4" />
-//           </button>
-//         )}
-//       </div>
-
-//       {/* AI Assistant Panel */}
-//       <AnimatePresence>
-//         {aiPanelOpen && (
-//           <motion.div
-//             initial={{ y: 400 }}
-//             animate={{ y: 0 }}
-//             exit={{ y: 400 }}
-//             className="absolute bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 p-6 shadow-2xl"
-//             style={{ height: '300px' }}
-//           >
-//             <div className="flex items-center justify-between mb-4">
-//               <div className="flex items-center gap-2">
-//                 <Sparkles className="w-5 h-5 text-purple-400" />
-//                 <h3 className="font-semibold">AI Story Assistant</h3>
-//               </div>
-//               <button onClick={() => setAiPanelOpen(false)} className="text-gray-500 hover:text-gray-300">
-//                 ✕
-//               </button>
-//             </div>
-
-//             <div className="bg-gray-800 rounded-lg p-4 mb-3 h-32 overflow-y-auto text-sm text-gray-300">
-//               <p className="mb-2">💡 <strong>Suggestion:</strong> Add emotional depth by exploring the hero's motivation for entering the forest.</p>
-//               <p>📝 <strong>Plot Twist Idea:</strong> The strange sounds could be from a wounded guardian spirit.</p>
-//             </div>
-
-//             <div className="flex gap-2">
-//               <input 
-//                 type="text"
-//                 placeholder="Ask AI to help with your story..."
-//                 className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-purple-500"
-//               />
-//               <button className="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg font-medium">
-//                 Generate
-//               </button>
-//             </div>
-//           </motion.div>
-//         )}
-//       </AnimatePresence>
-//     </div>
-//   );
-// };
-
-// export default StoryEditor;
-
-
-
-
-
-
-
-
-
-
+export default StoryEditor;
 
 
 
@@ -1443,291 +1479,291 @@
 
 
 //STORIES PAGE
-"use client"
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Plus, 
-  BookOpen, 
-  Calendar, 
-  Clock, 
-  Trash2, 
-  Search,
-  X
-} from 'lucide-react';
+// "use client"
+// import React, { useState } from 'react';
+// import { motion, AnimatePresence } from 'framer-motion';
+// import { 
+//   Plus, 
+//   BookOpen, 
+//   Calendar, 
+//   Clock, 
+//   Trash2, 
+//   Search,
+//   X
+// } from 'lucide-react';
 
-export default function StoriesDashboard() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showNewStoryModal, setShowNewStoryModal] = useState(false);
-  const [newStoryData, setNewStoryData] = useState({
-    title: '',
-    description: '',
-    genre: 'Fantasy'
-  });
+// export default function StoriesDashboard() {
+//   const [searchQuery, setSearchQuery] = useState('');
+//   const [showNewStoryModal, setShowNewStoryModal] = useState(false);
+//   const [newStoryData, setNewStoryData] = useState({
+//     title: '',
+//     description: '',
+//     genre: 'Fantasy'
+//   });
 
-  // Mock data - replace with real data from your backend
-  const stories = [
-    {
-      id: 1,
-      title: "The Last Guardian",
-      description: "An epic fantasy tale about a warrior protecting an ancient artifact",
-      lastModified: "2 hours ago",
-      created: "Jan 15, 2025",
-      nodeCount: 12
-    },
-    {
-      id: 2,
-      title: "Neon Shadows",
-      description: "A cyberpunk thriller set in a dystopian future city",
-      lastModified: "1 day ago",
-      created: "Jan 10, 2025",
-      nodeCount: 8
-    },
-    {
-      id: 3,
-      title: "Whispers in the Dark",
-      description: "A psychological horror story exploring the depths of fear",
-      lastModified: "3 days ago",
-      created: "Dec 28, 2024",
-      nodeCount: 15
-    },
-    {
-      id: 4,
-      title: "Ocean's Echo",
-      description: "A romantic adventure on the high seas",
-      lastModified: "1 week ago",
-      created: "Dec 20, 2024",
-      nodeCount: 6
-    }
-  ];
+//   // Mock data - replace with real data from your backend
+//   const stories = [
+//     {
+//       id: 1,
+//       title: "The Last Guardian",
+//       description: "An epic fantasy tale about a warrior protecting an ancient artifact",
+//       lastModified: "2 hours ago",
+//       created: "Jan 15, 2025",
+//       nodeCount: 12
+//     },
+//     {
+//       id: 2,
+//       title: "Neon Shadows",
+//       description: "A cyberpunk thriller set in a dystopian future city",
+//       lastModified: "1 day ago",
+//       created: "Jan 10, 2025",
+//       nodeCount: 8
+//     },
+//     {
+//       id: 3,
+//       title: "Whispers in the Dark",
+//       description: "A psychological horror story exploring the depths of fear",
+//       lastModified: "3 days ago",
+//       created: "Dec 28, 2024",
+//       nodeCount: 15
+//     },
+//     {
+//       id: 4,
+//       title: "Ocean's Echo",
+//       description: "A romantic adventure on the high seas",
+//       lastModified: "1 week ago",
+//       created: "Dec 20, 2024",
+//       nodeCount: 6
+//     }
+//   ];
 
-  const filteredStories = stories.filter(story => {
-    return story.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           story.description.toLowerCase().includes(searchQuery.toLowerCase());
-  });
+//   const filteredStories = stories.filter(story => {
+//     return story.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+//            story.description.toLowerCase().includes(searchQuery.toLowerCase());
+//   });
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewStoryData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+//   const handleInputChange = (e) => {
+//     const { name, value } = e.target;
+//     setNewStoryData(prev => ({
+//       ...prev,
+//       [name]: value
+//     }));
+//   };
 
-  const handleCreateStory = () => {
-    // Handle story creation logic here
-    console.log('Creating story:', newStoryData);
-    setShowNewStoryModal(false);
-    setNewStoryData({ title: '', description: '', genre: 'Fantasy' });
-  };
+//   const handleCreateStory = () => {
+//     // Handle story creation logic here
+//     console.log('Creating story:', newStoryData);
+//     setShowNewStoryModal(false);
+//     setNewStoryData({ title: '', description: '', genre: 'Fantasy' });
+//   };
 
-  return (
-    <div className="min-h-screen bg-[#0a1628] text-gray-300 pt-20">
-      {/* Header */}
-      <div className="border-b border-gray-800 bg-[#0d1b2a] px-6 py-4">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl font-semibold text-white mb-1">My Stories</h1>
-          <p className="text-sm text-gray-400">Create and manage your story projects</p>
-        </div>
-      </div>
+//   return (
+//     <div className="min-h-screen bg-[#0a1628] text-gray-300 pt-20">
+//       {/* Header */}
+//       <div className="border-b border-gray-800 bg-[#0d1b2a] px-6 py-4">
+//         <div className="max-w-7xl mx-auto">
+//           <h1 className="text-2xl font-semibold text-white mb-1">My Stories</h1>
+//           <p className="text-sm text-gray-400">Create and manage your story projects</p>
+//         </div>
+//       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Search Bar */}
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
-            <input
-              type="text"
-              placeholder="Search stories..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-[#1a2332] border border-gray-800 rounded text-gray-300 placeholder:text-gray-500 focus:outline-none focus:border-gray-700 transition-colors"
-            />
-          </div>
-        </div>
+//       <div className="max-w-7xl mx-auto px-6 py-8">
+//         {/* Search Bar */}
+//         <div className="mb-6">
+//           <div className="relative">
+//             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
+//             <input
+//               type="text"
+//               placeholder="Search stories..."
+//               value={searchQuery}
+//               onChange={(e) => setSearchQuery(e.target.value)}
+//               className="w-full pl-10 pr-4 py-2.5 bg-[#1a2332] border border-gray-800 rounded text-gray-300 placeholder:text-gray-500 focus:outline-none focus:border-gray-700 transition-colors"
+//             />
+//           </div>
+//         </div>
 
-        {/* Stories Grid */}
-        {filteredStories.length === 0 ? (
-          <div className="text-center py-20">
-            <BookOpen className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-gray-400 mb-2">No stories found</h3>
-            <p className="text-gray-500 mb-6">
-              {searchQuery ? "Try a different search term" : "Start creating your first story"}
-            </p>
-            {!searchQuery && (
-              <button
-                onClick={() => setShowNewStoryModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded text-sm font-medium transition-colors"
-              >
-                Create Your First Story
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredStories.map((story) => (
-              <motion.div
-                key={story.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="bg-[#1a2332] border border-gray-800 rounded p-5 hover:border-gray-700 transition-colors cursor-pointer group"
-              >
-                {/* Story Header */}
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-start gap-3 flex-1">
-                    <div className="w-10 h-10 bg-blue-600/20 rounded flex items-center justify-center flex-shrink-0">
-                      <BookOpen className="w-5 h-5 text-blue-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-white font-medium mb-1 truncate">
-                        {story.title}
-                      </h3>
-                      <p className="text-sm text-gray-400 line-clamp-2">
-                        {story.description}
-                      </p>
-                    </div>
-                  </div>
-                  <button className="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+//         {/* Stories Grid */}
+//         {filteredStories.length === 0 ? (
+//           <div className="text-center py-20">
+//             <BookOpen className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+//             <h3 className="text-xl font-medium text-gray-400 mb-2">No stories found</h3>
+//             <p className="text-gray-500 mb-6">
+//               {searchQuery ? "Try a different search term" : "Start creating your first story"}
+//             </p>
+//             {!searchQuery && (
+//               <button
+//                 onClick={() => setShowNewStoryModal(true)}
+//                 className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded text-sm font-medium transition-colors"
+//               >
+//                 Create Your First Story
+//               </button>
+//             )}
+//           </div>
+//         ) : (
+//           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+//             {filteredStories.map((story) => (
+//               <motion.div
+//                 key={story.id}
+//                 initial={{ opacity: 0 }}
+//                 animate={{ opacity: 1 }}
+//                 className="bg-[#1a2332] border border-gray-800 rounded p-5 hover:border-gray-700 transition-colors cursor-pointer group"
+//               >
+//                 {/* Story Header */}
+//                 <div className="flex items-start justify-between mb-3">
+//                   <div className="flex items-start gap-3 flex-1">
+//                     <div className="w-10 h-10 bg-blue-600/20 rounded flex items-center justify-center flex-shrink-0">
+//                       <BookOpen className="w-5 h-5 text-blue-400" />
+//                     </div>
+//                     <div className="flex-1 min-w-0">
+//                       <h3 className="text-white font-medium mb-1 truncate">
+//                         {story.title}
+//                       </h3>
+//                       <p className="text-sm text-gray-400 line-clamp-2">
+//                         {story.description}
+//                       </p>
+//                     </div>
+//                   </div>
+//                   <button className="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
+//                     <Trash2 className="w-4 h-4" />
+//                   </button>
+//                 </div>
 
-                {/* Story Stats */}
-                <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
-                  <span>{story.nodeCount} nodes</span>
-                </div>
+//                 {/* Story Stats */}
+//                 <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+//                   <span>{story.nodeCount} nodes</span>
+//                 </div>
 
-                {/* Story Dates */}
-                <div className="flex items-center justify-between text-xs text-gray-600 pt-3 border-t border-gray-800">
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    <span>{story.lastModified}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    <span>{story.created}</span>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
+//                 {/* Story Dates */}
+//                 <div className="flex items-center justify-between text-xs text-gray-600 pt-3 border-t border-gray-800">
+//                   <div className="flex items-center gap-1">
+//                     <Clock className="w-3 h-3" />
+//                     <span>{story.lastModified}</span>
+//                   </div>
+//                   <div className="flex items-center gap-1">
+//                     <Calendar className="w-3 h-3" />
+//                     <span>{story.created}</span>
+//                   </div>
+//                 </div>
+//               </motion.div>
+//             ))}
+//           </div>
+//         )}
 
-        {/* Add New Story Button */}
-        <div className="fixed bottom-8 right-8">
-          <button
-            onClick={() => setShowNewStoryModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg font-medium flex items-center gap-2 shadow-lg transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            New Story
-          </button>
-        </div>
+//         {/* Add New Story Button */}
+//         <div className="fixed bottom-8 right-8">
+//           <button
+//             onClick={() => setShowNewStoryModal(true)}
+//             className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg font-medium flex items-center gap-2 shadow-lg transition-colors"
+//           >
+//             <Plus className="w-5 h-5" />
+//             New Story
+//           </button>
+//         </div>
 
-        {/* New Story Modal */}
-        <AnimatePresence>
-          {showNewStoryModal && (
-            <>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/60 z-40"
-                onClick={() => setShowNewStoryModal(false)}
-              />
+//         {/* New Story Modal */}
+//         <AnimatePresence>
+//           {showNewStoryModal && (
+//             <>
+//               <motion.div
+//                 initial={{ opacity: 0 }}
+//                 animate={{ opacity: 1 }}
+//                 exit={{ opacity: 0 }}
+//                 className="fixed inset-0 bg-black/60 z-40"
+//                 onClick={() => setShowNewStoryModal(false)}
+//               />
               
-              <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-                <motion.div
-                  initial={{ scale: 0.95, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.95, opacity: 0 }}
-                  className="bg-[#1a2332] border border-gray-800 rounded-lg w-full max-w-lg"
-                >
-                  {/* Modal Header */}
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
-                    <h2 className="text-lg font-semibold text-white">Create New Story</h2>
-                    <button
-                      onClick={() => setShowNewStoryModal(false)}
-                      className="text-gray-500 hover:text-gray-300 transition-colors"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
+//               <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+//                 <motion.div
+//                   initial={{ scale: 0.95, opacity: 0 }}
+//                   animate={{ scale: 1, opacity: 1 }}
+//                   exit={{ scale: 0.95, opacity: 0 }}
+//                   className="bg-[#1a2332] border border-gray-800 rounded-lg w-full max-w-lg"
+//                 >
+//                   {/* Modal Header */}
+//                   <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
+//                     <h2 className="text-lg font-semibold text-white">Create New Story</h2>
+//                     <button
+//                       onClick={() => setShowNewStoryModal(false)}
+//                       className="text-gray-500 hover:text-gray-300 transition-colors"
+//                     >
+//                       <X className="w-5 h-5" />
+//                     </button>
+//                   </div>
 
-                  {/* Modal Body */}
-                  <div className="px-6 py-5 space-y-4">
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-2">
-                        Story Title
-                      </label>
-                      <input
-                        type="text"
-                        name="title"
-                        value={newStoryData.title}
-                        onChange={handleInputChange}
-                        placeholder="Enter story title..."
-                        className="w-full px-3 py-2 bg-[#0d1b2a] border border-gray-800 rounded text-gray-300 placeholder:text-gray-600 focus:outline-none focus:border-gray-700 transition-colors"
-                      />
-                    </div>
+//                   {/* Modal Body */}
+//                   <div className="px-6 py-5 space-y-4">
+//                     <div>
+//                       <label className="block text-sm text-gray-400 mb-2">
+//                         Story Title
+//                       </label>
+//                       <input
+//                         type="text"
+//                         name="title"
+//                         value={newStoryData.title}
+//                         onChange={handleInputChange}
+//                         placeholder="Enter story title..."
+//                         className="w-full px-3 py-2 bg-[#0d1b2a] border border-gray-800 rounded text-gray-300 placeholder:text-gray-600 focus:outline-none focus:border-gray-700 transition-colors"
+//                       />
+//                     </div>
 
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-2">
-                        Description
-                      </label>
-                      <textarea
-                        name="description"
-                        value={newStoryData.description}
-                        onChange={handleInputChange}
-                        placeholder="Describe your story..."
-                        rows={4}
-                        className="w-full px-3 py-2 bg-[#0d1b2a] border border-gray-800 rounded text-gray-300 placeholder:text-gray-600 focus:outline-none focus:border-gray-700 transition-colors resize-none"
-                      />
-                    </div>
+//                     <div>
+//                       <label className="block text-sm text-gray-400 mb-2">
+//                         Description
+//                       </label>
+//                       <textarea
+//                         name="description"
+//                         value={newStoryData.description}
+//                         onChange={handleInputChange}
+//                         placeholder="Describe your story..."
+//                         rows={4}
+//                         className="w-full px-3 py-2 bg-[#0d1b2a] border border-gray-800 rounded text-gray-300 placeholder:text-gray-600 focus:outline-none focus:border-gray-700 transition-colors resize-none"
+//                       />
+//                     </div>
 
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-2">
-                        Genre
-                      </label>
-                      <select
-                        name="genre"
-                        value={newStoryData.genre}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 bg-[#0d1b2a] border border-gray-800 rounded text-gray-300 focus:outline-none focus:border-gray-700 transition-colors"
-                      >
-                        <option>Fantasy</option>
-                        <option>Sci-Fi</option>
-                        <option>Horror</option>
-                        <option>Romance</option>
-                        <option>Mystery</option>
-                        <option>Adventure</option>
-                      </select>
-                    </div>
-                  </div>
+//                     <div>
+//                       <label className="block text-sm text-gray-400 mb-2">
+//                         Genre
+//                       </label>
+//                       <select
+//                         name="genre"
+//                         value={newStoryData.genre}
+//                         onChange={handleInputChange}
+//                         className="w-full px-3 py-2 bg-[#0d1b2a] border border-gray-800 rounded text-gray-300 focus:outline-none focus:border-gray-700 transition-colors"
+//                       >
+//                         <option>Fantasy</option>
+//                         <option>Sci-Fi</option>
+//                         <option>Horror</option>
+//                         <option>Romance</option>
+//                         <option>Mystery</option>
+//                         <option>Adventure</option>
+//                       </select>
+//                     </div>
+//                   </div>
 
-                  {/* Modal Footer */}
-                  <div className="flex gap-3 px-6 py-4 border-t border-gray-800">
-                    <button
-                      onClick={() => setShowNewStoryModal(false)}
-                      className="flex-1 px-4 py-2 bg-[#0d1b2a] hover:bg-[#0a1628] text-gray-300 rounded text-sm font-medium transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleCreateStory}
-                      className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors"
-                    >
-                      Create Story
-                    </button>
-                  </div>
-                </motion.div>
-              </div>
-            </>
-          )}
-        </AnimatePresence>
-      </div>
-    </div>
-  );
-}
+//                   {/* Modal Footer */}
+//                   <div className="flex gap-3 px-6 py-4 border-t border-gray-800">
+//                     <button
+//                       onClick={() => setShowNewStoryModal(false)}
+//                       className="flex-1 px-4 py-2 bg-[#0d1b2a] hover:bg-[#0a1628] text-gray-300 rounded text-sm font-medium transition-colors"
+//                     >
+//                       Cancel
+//                     </button>
+//                     <button
+//                       onClick={handleCreateStory}
+//                       className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors"
+//                     >
+//                       Create Story
+//                     </button>
+//                   </div>
+//                 </motion.div>
+//               </div>
+//             </>
+//           )}
+//         </AnimatePresence>
+//       </div>
+//     </div>
+//   );
+// }
 
 
 

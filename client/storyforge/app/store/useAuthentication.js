@@ -10,6 +10,7 @@ const useAuthentication = create(
       error: null,
       accessToken: null,
       refreshTimer: null,
+      isInitialized: false,
 
       clearError: () => {
         set({ error: null });

@@ -53,7 +53,7 @@ const fetchWithAuth = async (URL, options = {}) => {
           });
 
           if (typeof window !== "undefined") {
-            window.location.href = "/login";
+            window.location.href = "/authentication";
           }
           throw new Error("Session expired. Please login again.");
         }

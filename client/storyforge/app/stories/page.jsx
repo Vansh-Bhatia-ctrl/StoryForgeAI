@@ -1,14 +1,76 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import NoResultFound from "../components/NoResultFound";
 import { BookOpen, Calendar, Timer, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { format, formatDistanceToNow } from "date-fns";
 
-import ProtectedRoute from "../authentication/ProtectedRoute";
+import ProtectedRoute from "../components/ProtectedRoute";
+import useStoryCards from "../store/useStoryCards";
 
 const page = () => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [userInput, setUserInput] = useState({
+    title: "",
+    description: "",
+    genre: "Fantasy",
+  });
+  const {
+    createdStoryCard,
+    loading,
+    error,
+    postStoryCards,
+    fetchStoryCards,
+    fetchedStories,
+  } = useStoryCards();
+  useEffect(() => {
+    fetchStoryCards();
+  }, []);
 
+  const handleUserInput = (e) => {
+    const { name, value } = e.target;
+    setUserInput((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!userInput.title.trim()) {
+      alert("Please enter a story title");
+      return;
+    }
+
+    if (!userInput.description.trim()) {
+      alert("Please enter a description");
+      return;
+    }
+
+    try {
+      await postStoryCards(
+        userInput.title,
+        userInput.description,
+        userInput.genre
+      );
+
+      setModalIsOpen(false);
+      setUserInput({
+        title: "",
+        description: "",
+        genre: "Fantasy",
+      });
+
+      await fetchStoryCards();
+
+      alert("Story created successfully!");
+    } catch (error) {
+      alert(error.message || "Failed to create story");
+    }
+  };
+
+  console.log("fetched stories: ", fetchedStories);
   return (
     <>
       <ProtectedRoute>
@@ -40,64 +102,68 @@ const page = () => {
               </div>
             </div>
 
-            {/* <NoResultFound /> */}
+            {fetchedStories.length === 0 && !loading && <NoResultFound />}
 
             {/*Story Cards */}
             <div className="mt-7 space-y-5 md:grid md:grid-cols-2 lg:grid md:gap-3 lg:grid-cols-3 lg:gap-4">
-              <div className="bg-custom-gray-300 border border-slate-800 p-4 rounded-md lg:p-6">
-                <div>
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-blue-600/20 rounded flex items-center justify-center flex-shrink-0">
-                      <BookOpen className="w-5 h-5 text-blue-400" />
-                    </div>
-                    <div>
-                      <p className="text-white font-semibold">
-                        The Last Guardian
-                      </p>
-                      <p className="text-slate-400 line-clamp-2 text-sm">
-                        An epic fantasy tale about a warrior who is protecting
-                        an ancient artifact
-                      </p>
-                    </div>
-                  </div>
-
-                  {/*Nodes Section*/}
-                  <div className="mt-3 p-2">
-                    <div className="border-b border-slate-800">
-                      <p className="text-slate-500 text-[13px] mb-3">
-                        12 Nodes
-                      </p>
-                    </div>
-                  </div>
-
-                  {/*TimeStamps */}
-                  <div className="mt-2 px-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div>
-                          <Timer className="text-slate-600 w-4 h-4" />
-                        </div>
-                        <div>
-                          <p className="text-slate-600 text-[13px]">
-                            2 hours ago
-                          </p>
+              {fetchedStories.map((story, index) => (
+                <div
+                  key={story._id || index}
+                  className="bg-custom-gray-300 border border-slate-800 p-4 rounded-md lg:p-6"
+                >
+                  <div>
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 bg-blue-600/20 rounded flex items-center justify-center flex-shrink-0">
+                        <BookOpen className="w-5 h-5 text-blue-400" />
+                      </div>
+                      <div className="flex-1">
+                        {" "}
+                        <p className="text-white font-semibold">
+                          {story.title}
+                        </p>
+                        <p className="text-slate-400 line-clamp-2 text-sm mt-1">
+                          {story.description}
+                        </p>
+                        <div className="mt-2">
+                          <span className="inline-block px-2 py-1 text-xs rounded bg-blue-600/20 text-blue-400">
+                            {story.genre}
+                          </span>
                         </div>
                       </div>
+                    </div>
 
-                      <div className="flex items-center gap-2">
-                        <div>
-                          <Calendar className="text-slate-600 w-4 h-4" />
-                        </div>
-                        <div>
+                    {/* Nodes Section */}
+                    <div className="mt-3 p-2">
+                      <div className="border-b border-slate-800">
+                        <p className="text-slate-500 text-[13px] mb-3">
+                          12 nodes
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Timestamps */}
+                    <div className="mt-2 px-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Timer className="text-slate-600 w-4 h-4" />
                           <p className="text-slate-600 text-[13px]">
-                            Jan 15, 2025
+                            {formatDistanceToNow(new Date(story.createdAt), {
+                              addSuffix: true,
+                            })}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Calendar className="text-slate-600 w-4 h-4" />
+                          <p className="text-slate-600 text-[13px]">
+                            {format(new Date(story.createdAt), "do MMMM yy")}
                           </p>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
           </div>
 
@@ -127,12 +193,15 @@ const page = () => {
                       </div>
                       <div className="p-5">
                         <div>
-                          <form>
+                          <form onSubmit={handleSubmit}>
                             <div>
                               <label className="text-slate-400 font-semibold">
                                 Story Title
                               </label>
                               <input
+                                name="title"
+                                value={userInput.title}
+                                onChange={handleUserInput}
                                 className="bg-custom-gray-300 w-full p-2 placeholder:text-slate-400 rounded-md border border-slate-800 focus:outline-none focus:border-gray-700 transition-colors text-white mt-2"
                                 placeholder="Enter story title..."
                               />
@@ -143,6 +212,9 @@ const page = () => {
                                 Description
                               </label>
                               <textarea
+                                name="description"
+                                value={userInput.description}
+                                onChange={handleUserInput}
                                 className="bg-custom-gray-300 w-full p-2 placeholder:text-slate-400 rounded-md border border-slate-800 focus:outline-none focus:border-gray-700 transition-colors text-white mt-2  resize-none"
                                 placeholder="Brief description of story..."
                               />
@@ -154,6 +226,8 @@ const page = () => {
                               </label>
                               <select
                                 name="genre"
+                                value={userInput.genre}
+                                onChange={handleUserInput}
                                 className="w-full px-3 py-2 bg-[#0d1b2a] border border-gray-800 rounded text-gray-300 focus:outline-none focus:border-gray-700 transition-colors"
                               >
                                 <option>Fantasy</option>
@@ -171,6 +245,7 @@ const page = () => {
                               <div className="grid grid-cols-2 gap-2">
                                 <div>
                                   <button
+                                    type="button"
                                     onClick={() => setModalIsOpen(false)}
                                     className="text-slate-300 bg-slate-600 p-4 rounded w-full hover:bg-slate-700 duration-200 transition-colors"
                                   >
@@ -178,8 +253,12 @@ const page = () => {
                                   </button>
                                 </div>
                                 <div>
-                                  <button className="bg-blue-700 text-white p-4 rounded w-full hover:bg-blue-800 duration-200 transition-colors">
-                                    Create Story
+                                  <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="bg-blue-700 text-white p-4 rounded w-full hover:bg-blue-800 duration-200 transition-colors"
+                                  >
+                                    {loading ? "Creating..." : "Create Story"}
                                   </button>
                                 </div>
                               </div>

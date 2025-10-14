@@ -1,7 +1,10 @@
+"use client";
 import { BookOpen } from "lucide-react";
 import React from "react";
+import useStoryCards from "../store/useStoryCards";
 
 const NoResultFound = () => {
+  const { fetchedStories } = useStoryCards();
   return (
     <>
       <div>
@@ -14,7 +17,9 @@ const NoResultFound = () => {
               No stories found
             </p>
             <p className="text-slate-400 text-sm lg:text-lg">
-              Try with a different search term.
+              {fetchedStories.length === 0
+                ? "Create your first story."
+                : "Try with a different search term."}
             </p>
           </div>
         </div>
