@@ -26,7 +26,7 @@ const verifyAuthentication = async (req, res, next) => {
   } catch (error) {
     console.error("Auth middleware error:", error.message);
 
-    if (error.message === "Access token has expired") {
+    if (error.message === "Token has expired") {
       return res.status(401).json({
         success: false,
         message: "Access token expired. Please refresh.",

@@ -8,6 +8,7 @@ dotenv.config();
 
 const authRoutes = require("./routes/auth");
 const storyCard = require("./routes/storyCard");
+const fetchStoryCard = require("./routes/fetchStoryCards");
 
 const app = express();
 app.use(express.json());
@@ -59,6 +60,7 @@ app.get("/health", (req, res) => {
 // API Routes (we'll add these next)
 app.use("/api/auth", authRoutes);
 app.use("/api/save-story", storyCard);
+app.use("/api/fetch-story", fetchStoryCard);
 
 app.use((req, res, next) => {
   res.status(404).json({

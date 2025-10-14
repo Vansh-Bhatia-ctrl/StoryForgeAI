@@ -137,10 +137,10 @@ const login = async (req, res) => {
 
 const refresh = async (req, res) => {
   try {
-    const { refreshToken } = res.cookie;
+    const { refreshToken } = req.cookies;
 
-    if (!refresh) {
-      return res.status(401).status({
+    if (!refreshToken) {
+      return res.status(401).json({
         success: false,
         message: "Refresh token not found. Please login again.",
       });
@@ -157,7 +157,7 @@ const refresh = async (req, res) => {
       });
     }
 
-    if (!storedToken.isActive()) {
+    if (!storedRefreshToken.isActive()) {
       return res.status(401).json({
         success: false,
         message: "Refresh token expired or revoked. Please login again.",
@@ -168,14 +168,14 @@ const refresh = async (req, res) => {
     const newRefreshToken = generateRefreshToken();
 
     storedRefreshToken.revokedAt = new Date();
-    storedToken.revokedByIp = req.ip;
-    storedToken.replacedByToken = newRefreshToken;
-    await storedToken.save();
+    storedRefreshToken.revokedByIp = req.ip;
+    storedRefreshToken.replacedByToken = newRefreshToken;
+    await storedRefreshToken.save();
 
     await RefreshTokens.create({
       token: newRefreshToken,
-      user: storedToken.user,
-      expiresAt: getRefreshTokenExpiry(),
+      user: storedRefreshToken.user,
+      expiresAt: generateRefreshTokenExpiry(),
       createdByIp: req.ip,
     });
 
