@@ -56,6 +56,12 @@ const storyCardSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    nodes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Nodes",
+      },
+    ],
   },
   { timestamps: true }
 );
