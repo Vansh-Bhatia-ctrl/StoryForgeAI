@@ -7,6 +7,7 @@ import { format, formatDistanceToNow } from "date-fns";
 
 import ProtectedRoute from "../components/ProtectedRoute";
 import useStoryCards from "../store/useStoryCards";
+import Link from "next/link";
 
 const page = () => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
@@ -107,11 +108,8 @@ const page = () => {
             {/*Story Cards */}
             <div className="mt-7 space-y-5 md:grid md:grid-cols-2 lg:grid md:gap-3 lg:grid-cols-3 lg:gap-4">
               {fetchedStories.map((story, index) => (
-                <div
-                  key={story._id || index}
-                  className="bg-custom-gray-300 border border-slate-800 p-4 rounded-md lg:p-6"
-                >
-                  <div>
+                <Link href={`/stories/${story._id}`} key={story._id || index}>
+                  <div className="bg-custom-gray-300 border border-slate-800 p-4 rounded-md lg:p-6">
                     <div className="flex items-start gap-4">
                       <div className="w-10 h-10 bg-blue-600/20 rounded flex items-center justify-center flex-shrink-0">
                         <BookOpen className="w-5 h-5 text-blue-400" />
@@ -162,7 +160,7 @@ const page = () => {
                       </div>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
