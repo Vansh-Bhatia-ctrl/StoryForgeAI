@@ -527,610 +527,610 @@
 
 
 //STORY EDITOR PAGE
-"use client";
-import React, { useState, useCallback } from 'react';
-import ReactFlow, { 
-  MiniMap, 
-  Controls, 
-  Background,
-  useNodesState,
-  useEdgesState,
-  addEdge,
-  MarkerType
-} from 'reactflow';
-import 'reactflow/dist/style.css';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  GitBranch, 
-  Users, 
-  User, 
-  MessageSquare, 
-  Plus,
-  Trash2,
-  Edit,
-  Send,
-  Sparkles,
-  BookOpen,
-  Zap
-} from 'lucide-react';
+// "use client";
+// import React, { useState, useCallback } from 'react';
+// import ReactFlow, { 
+//   MiniMap, 
+//   Controls, 
+//   Background,
+//   useNodesState,
+//   useEdgesState,
+//   addEdge,
+//   MarkerType
+// } from 'reactflow';
+// import 'reactflow/dist/style.css';
+// import { motion, AnimatePresence } from 'framer-motion';
+// import { 
+//   GitBranch, 
+//   Users, 
+//   User, 
+//   MessageSquare, 
+//   Plus,
+//   Trash2,
+//   Edit,
+//   Send,
+//   Sparkles,
+//   BookOpen,
+//   Zap
+// } from 'lucide-react';
 
-// Initial nodes and edges for the story flow
-const initialNodes = [
-  {
-    id: '1',
-    type: 'input',
-    data: { label: 'Story Beginning: The Hero\'s Call' },
-    position: { x: 250, y: 5 },
-    style: { background: '#6366f1', color: 'white', border: '2px solid #4f46e5', borderRadius: '8px', padding: '10px' }
-  },
-  {
-    id: '2',
-    data: { label: 'Choice: Accept the Quest' },
-    position: { x: 100, y: 150 },
-    style: { background: '#10b981', color: 'white', border: '2px solid #059669', borderRadius: '8px', padding: '10px' }
-  },
-  {
-    id: '3',
-    data: { label: 'Choice: Refuse and Stay Home' },
-    position: { x: 400, y: 150 },
-    style: { background: '#ef4444', color: 'white', border: '2px solid #dc2626', borderRadius: '8px', padding: '10px' }
-  },
-];
+// // Initial nodes and edges for the story flow
+// const initialNodes = [
+//   {
+//     id: '1',
+//     type: 'input',
+//     data: { label: 'Story Beginning: The Hero\'s Call' },
+//     position: { x: 250, y: 5 },
+//     style: { background: '#6366f1', color: 'white', border: '2px solid #4f46e5', borderRadius: '8px', padding: '10px' }
+//   },
+//   {
+//     id: '2',
+//     data: { label: 'Choice: Accept the Quest' },
+//     position: { x: 100, y: 150 },
+//     style: { background: '#10b981', color: 'white', border: '2px solid #059669', borderRadius: '8px', padding: '10px' }
+//   },
+//   {
+//     id: '3',
+//     data: { label: 'Choice: Refuse and Stay Home' },
+//     position: { x: 400, y: 150 },
+//     style: { background: '#ef4444', color: 'white', border: '2px solid #dc2626', borderRadius: '8px', padding: '10px' }
+//   },
+// ];
 
-const initialEdges = [
-  { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: '#10b981' }, markerEnd: { type: MarkerType.ArrowClosed } },
-  { id: 'e1-3', source: '1', target: '3', animated: true, style: { stroke: '#ef4444' }, markerEnd: { type: MarkerType.ArrowClosed } },
-];
+// const initialEdges = [
+//   { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: '#10b981' }, markerEnd: { type: MarkerType.ArrowClosed } },
+//   { id: 'e1-3', source: '1', target: '3', animated: true, style: { stroke: '#ef4444' }, markerEnd: { type: MarkerType.ArrowClosed } },
+// ];
 
-const StoryForgeEditor = () => {
-  const [activeTab, setActiveTab] = useState('flow');
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+// const StoryForgeEditor = () => {
+//   const [activeTab, setActiveTab] = useState('flow');
+//   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+//   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   
-  // Character Studio State
-  const [characters, setCharacters] = useState([
-    {
-      id: 1,
-      name: 'Elena the Brave',
-      backstory: 'A fearless knight who lost her family to a dragon attack.',
-      personality: 'Courageous, determined, sometimes reckless',
-      traits: ['brave', 'loyal', 'hot-headed'],
-      hasAI: true
-    }
-  ]);
-  const [showCharacterForm, setShowCharacterForm] = useState(false);
-  const [newCharacter, setNewCharacter] = useState({
-    name: '',
-    backstory: '',
-    personality: '',
-    traits: []
-  });
+//   // Character Studio State
+//   const [characters, setCharacters] = useState([
+//     {
+//       id: 1,
+//       name: 'Elena the Brave',
+//       backstory: 'A fearless knight who lost her family to a dragon attack.',
+//       personality: 'Courageous, determined, sometimes reckless',
+//       traits: ['brave', 'loyal', 'hot-headed'],
+//       hasAI: true
+//     }
+//   ]);
+//   const [showCharacterForm, setShowCharacterForm] = useState(false);
+//   const [newCharacter, setNewCharacter] = useState({
+//     name: '',
+//     backstory: '',
+//     personality: '',
+//     traits: []
+//   });
 
-  // AI Chat State
-  const [selectedCharacter, setSelectedCharacter] = useState(null);
-  const [chatMessages, setChatMessages] = useState([]);
-  const [currentMessage, setCurrentMessage] = useState('');
+//   // AI Chat State
+//   const [selectedCharacter, setSelectedCharacter] = useState(null);
+//   const [chatMessages, setChatMessages] = useState([]);
+//   const [currentMessage, setCurrentMessage] = useState('');
 
-  // Collaboration State
-  const [collaborators, setCollaborators] = useState([
-    { id: 1, name: 'Alex Chen', status: 'online', lastEdit: '2 min ago', avatar: '👨‍💻' },
-    { id: 2, name: 'Sarah Miller', status: 'online', lastEdit: '5 min ago', avatar: '👩‍🎨' },
-    { id: 3, name: 'Mike Johnson', status: 'away', lastEdit: '1 hour ago', avatar: '👨‍🎨' }
-  ]);
-  const [recentChanges, setRecentChanges] = useState([
-    { user: 'Alex Chen', action: 'Added new story node', time: '2 min ago', node: 'The Dark Forest' },
-    { user: 'Sarah Miller', action: 'Updated character dialogue', time: '5 min ago', node: 'Village Elder' },
-    { user: 'You', action: 'Created new branch', time: '10 min ago', node: 'Dragon\'s Lair' }
-  ]);
+//   // Collaboration State
+//   const [collaborators, setCollaborators] = useState([
+//     { id: 1, name: 'Alex Chen', status: 'online', lastEdit: '2 min ago', avatar: '👨‍💻' },
+//     { id: 2, name: 'Sarah Miller', status: 'online', lastEdit: '5 min ago', avatar: '👩‍🎨' },
+//     { id: 3, name: 'Mike Johnson', status: 'away', lastEdit: '1 hour ago', avatar: '👨‍🎨' }
+//   ]);
+//   const [recentChanges, setRecentChanges] = useState([
+//     { user: 'Alex Chen', action: 'Added new story node', time: '2 min ago', node: 'The Dark Forest' },
+//     { user: 'Sarah Miller', action: 'Updated character dialogue', time: '5 min ago', node: 'Village Elder' },
+//     { user: 'You', action: 'Created new branch', time: '10 min ago', node: 'Dragon\'s Lair' }
+//   ]);
 
-  // React Flow handlers
-  const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
+//   // React Flow handlers
+//   const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
 
-  const addNewNode = () => {
-    const newNode = {
-      id: `${nodes.length + 1}`,
-      data: { label: 'New Story Node' },
-      position: { x: Math.random() * 400, y: nodes.length * 100 + 100 },
-      style: { background: '#8b5cf6', color: 'white', border: '2px solid #7c3aed', borderRadius: '8px', padding: '10px' }
-    };
-    setNodes((nds) => [...nds, newNode]);
-  };
+//   const addNewNode = () => {
+//     const newNode = {
+//       id: `${nodes.length + 1}`,
+//       data: { label: 'New Story Node' },
+//       position: { x: Math.random() * 400, y: nodes.length * 100 + 100 },
+//       style: { background: '#8b5cf6', color: 'white', border: '2px solid #7c3aed', borderRadius: '8px', padding: '10px' }
+//     };
+//     setNodes((nds) => [...nds, newNode]);
+//   };
 
-  // Character handlers
-  const addCharacter = () => {
-    if (newCharacter.name && newCharacter.personality) {
-      setCharacters([...characters, {
-        id: characters.length + 1,
-        ...newCharacter,
-        hasAI: false,
-        traits: newCharacter.traits.filter(t => t.trim() !== '')
-      }]);
-      setNewCharacter({ name: '', backstory: '', personality: '', traits: [] });
-      setShowCharacterForm(false);
-    }
-  };
+//   // Character handlers
+//   const addCharacter = () => {
+//     if (newCharacter.name && newCharacter.personality) {
+//       setCharacters([...characters, {
+//         id: characters.length + 1,
+//         ...newCharacter,
+//         hasAI: false,
+//         traits: newCharacter.traits.filter(t => t.trim() !== '')
+//       }]);
+//       setNewCharacter({ name: '', backstory: '', personality: '', traits: [] });
+//       setShowCharacterForm(false);
+//     }
+//   };
 
-  const createAIAgent = (characterId) => {
-    setCharacters(characters.map(char => 
-      char.id === characterId ? { ...char, hasAI: true } : char
-    ));
-  };
+//   const createAIAgent = (characterId) => {
+//     setCharacters(characters.map(char => 
+//       char.id === characterId ? { ...char, hasAI: true } : char
+//     ));
+//   };
 
-  const deleteCharacter = (characterId) => {
-    setCharacters(characters.filter(char => char.id !== characterId));
-  };
+//   const deleteCharacter = (characterId) => {
+//     setCharacters(characters.filter(char => char.id !== characterId));
+//   };
 
-  // AI Chat handlers
-  const sendMessage = () => {
-    if (!currentMessage.trim() || !selectedCharacter) return;
+//   // AI Chat handlers
+//   const sendMessage = () => {
+//     if (!currentMessage.trim() || !selectedCharacter) return;
 
-    const userMsg = {
-      id: Date.now(),
-      sender: 'user',
-      text: currentMessage,
-      timestamp: new Date().toLocaleTimeString()
-    };
+//     const userMsg = {
+//       id: Date.now(),
+//       sender: 'user',
+//       text: currentMessage,
+//       timestamp: new Date().toLocaleTimeString()
+//     };
 
-    // Simulate AI response (in real app, this would call your Ollama API)
-    const aiResponse = {
-      id: Date.now() + 1,
-      sender: 'ai',
-      text: generateCharacterResponse(currentMessage, selectedCharacter),
-      timestamp: new Date().toLocaleTimeString()
-    };
+//     // Simulate AI response (in real app, this would call your Ollama API)
+//     const aiResponse = {
+//       id: Date.now() + 1,
+//       sender: 'ai',
+//       text: generateCharacterResponse(currentMessage, selectedCharacter),
+//       timestamp: new Date().toLocaleTimeString()
+//     };
 
-    setChatMessages([...chatMessages, userMsg, aiResponse]);
-    setCurrentMessage('');
-  };
+//     setChatMessages([...chatMessages, userMsg, aiResponse]);
+//     setCurrentMessage('');
+//   };
 
-  const generateCharacterResponse = (message, character) => {
-    // This is a mock response. In production, you'd call your Ollama API here
-    const responses = [
-      `*${character.name} speaks in a ${character.personality} manner* "${message.toLowerCase().includes('quest') ? 'The quest you speak of is dangerous, but I fear no challenge!' : 'Interesting... tell me more.'}"`,
-      `*${character.name} considers your words* "Based on my personality as ${character.personality}, I believe ${message.toLowerCase().includes('help') ? 'I should aid you in this endeavor.' : 'we should proceed with caution.'}"`,
-      `"As someone who is ${character.personality}, I ${message.toLowerCase().includes('danger') ? 'embrace the thrill of danger!' : 'approach this thoughtfully.'}" *${character.name} says firmly*`
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
-  };
+//   const generateCharacterResponse = (message, character) => {
+//     // This is a mock response. In production, you'd call your Ollama API here
+//     const responses = [
+//       `*${character.name} speaks in a ${character.personality} manner* "${message.toLowerCase().includes('quest') ? 'The quest you speak of is dangerous, but I fear no challenge!' : 'Interesting... tell me more.'}"`,
+//       `*${character.name} considers your words* "Based on my personality as ${character.personality}, I believe ${message.toLowerCase().includes('help') ? 'I should aid you in this endeavor.' : 'we should proceed with caution.'}"`,
+//       `"As someone who is ${character.personality}, I ${message.toLowerCase().includes('danger') ? 'embrace the thrill of danger!' : 'approach this thoughtfully.'}" *${character.name} says firmly*`
+//     ];
+//     return responses[Math.floor(Math.random() * responses.length)];
+//   };
 
-  const tabs = [
-    { id: 'flow', name: 'Visual Flow', icon: GitBranch },
-    { id: 'collab', name: 'Collaboration', icon: Users },
-    { id: 'characters', name: 'Character Studio', icon: User },
-    { id: 'ai-chat', name: 'AI Character Chat', icon: MessageSquare }
-  ];
+//   const tabs = [
+//     { id: 'flow', name: 'Visual Flow', icon: GitBranch },
+//     { id: 'collab', name: 'Collaboration', icon: Users },
+//     { id: 'characters', name: 'Character Studio', icon: User },
+//     { id: 'ai-chat', name: 'AI Character Chat', icon: MessageSquare }
+//   ];
 
-  return (
-    <div className="h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col">
-      {/* Header */}
-      <div className="bg-slate-800/50 backdrop-blur-sm border-b border-purple-500/30 p-4">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-2 rounded-lg">
-              <BookOpen className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">StoryForge AI</h1>
-              <p className="text-sm text-purple-300">Story Editor</p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <button className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center gap-2">
-              <Sparkles className="w-4 h-4" />
-              AI Assist
-            </button>
-            <button className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
-              Save Story
-            </button>
-          </div>
-        </div>
-      </div>
+//   return (
+//     <div className="h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col">
+//       {/* Header */}
+//       <div className="bg-slate-800/50 backdrop-blur-sm border-b border-purple-500/30 p-4">
+//         <div className="flex items-center justify-between max-w-7xl mx-auto">
+//           <div className="flex items-center gap-3">
+//             <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-2 rounded-lg">
+//               <BookOpen className="w-6 h-6 text-white" />
+//             </div>
+//             <div>
+//               <h1 className="text-2xl font-bold text-white">StoryForge AI</h1>
+//               <p className="text-sm text-purple-300">Story Editor</p>
+//             </div>
+//           </div>
+//           <div className="flex gap-2">
+//             <button className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center gap-2">
+//               <Sparkles className="w-4 h-4" />
+//               AI Assist
+//             </button>
+//             <button className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+//               Save Story
+//             </button>
+//           </div>
+//         </div>
+//       </div>
 
-      {/* Tab Navigation */}
-      <div className="bg-slate-800/30 backdrop-blur-sm border-b border-purple-500/20">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex gap-1">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-6 py-3 flex items-center gap-2 transition-all relative ${
-                    activeTab === tab.id
-                      ? 'text-white'
-                      : 'text-purple-300 hover:text-white'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  {tab.name}
-                  {activeTab === tab.id && (
-                    <motion.div
-                      layoutId="activeTab"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500"
-                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+//       {/* Tab Navigation */}
+//       <div className="bg-slate-800/30 backdrop-blur-sm border-b border-purple-500/20">
+//         <div className="max-w-7xl mx-auto px-4">
+//           <div className="flex gap-1">
+//             {tabs.map((tab) => {
+//               const Icon = tab.icon;
+//               return (
+//                 <button
+//                   key={tab.id}
+//                   onClick={() => setActiveTab(tab.id)}
+//                   className={`px-6 py-3 flex items-center gap-2 transition-all relative ${
+//                     activeTab === tab.id
+//                       ? 'text-white'
+//                       : 'text-purple-300 hover:text-white'
+//                   }`}
+//                 >
+//                   <Icon className="w-4 h-4" />
+//                   {tab.name}
+//                   {activeTab === tab.id && (
+//                     <motion.div
+//                       layoutId="activeTab"
+//                       className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500"
+//                       transition={{ type: "spring", stiffness: 500, damping: 30 }}
+//                     />
+//                   )}
+//                 </button>
+//               );
+//             })}
+//           </div>
+//         </div>
+//       </div>
 
-      {/* Content Area */}
-      <div className="flex-1 overflow-hidden">
-        <AnimatePresence mode="wait">
-          {/* Visual Flow Tab */}
-          {activeTab === 'flow' && (
-            <motion.div
-              key="flow"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="h-full relative"
-            >
-              <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
-                fitView
-                className="bg-slate-900"
-              >
-                <Background color="#6366f1" gap={16} />
-                <Controls className="bg-slate-800 border border-purple-500/30" />
-                <MiniMap 
-                  nodeColor={(node) => {
-                    if (node.type === 'input') return '#6366f1';
-                    return '#8b5cf6';
-                  }}
-                  className="bg-slate-800 border border-purple-500/30"
-                />
-              </ReactFlow>
+//       {/* Content Area */}
+//       <div className="flex-1 overflow-hidden">
+//         <AnimatePresence mode="wait">
+//           {/* Visual Flow Tab */}
+//           {activeTab === 'flow' && (
+//             <motion.div
+//               key="flow"
+//               initial={{ opacity: 0, y: 20 }}
+//               animate={{ opacity: 1, y: 0 }}
+//               exit={{ opacity: 0, y: -20 }}
+//               className="h-full relative"
+//             >
+//               <ReactFlow
+//                 nodes={nodes}
+//                 edges={edges}
+//                 onNodesChange={onNodesChange}
+//                 onEdgesChange={onEdgesChange}
+//                 onConnect={onConnect}
+//                 fitView
+//                 className="bg-slate-900"
+//               >
+//                 <Background color="#6366f1" gap={16} />
+//                 <Controls className="bg-slate-800 border border-purple-500/30" />
+//                 <MiniMap 
+//                   nodeColor={(node) => {
+//                     if (node.type === 'input') return '#6366f1';
+//                     return '#8b5cf6';
+//                   }}
+//                   className="bg-slate-800 border border-purple-500/30"
+//                 />
+//               </ReactFlow>
               
-              <button
-                onClick={addNewNode}
-                className="absolute bottom-24 right-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 transition-all hover:scale-105"
-              >
-                <Plus className="w-5 h-5" />
-                Add Story Node
-              </button>
+//               <button
+//                 onClick={addNewNode}
+//                 className="absolute bottom-24 right-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 transition-all hover:scale-105"
+//               >
+//                 <Plus className="w-5 h-5" />
+//                 Add Story Node
+//               </button>
 
             
-            </motion.div>
-          )}
+//             </motion.div>
+//           )}
 
-          {/* Collaboration Tab */}
-          {activeTab === 'collab' && (
-            <motion.div
-              key="collab"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="h-full overflow-auto p-6"
-            >
-              <div className="max-w-6xl mx-auto space-y-6">
-                {/* Active Collaborators */}
-                <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30">
-                  <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                    <Users className="w-5 h-5 text-purple-400" />
-                    Active Collaborators
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {collaborators.map((collab) => (
-                      <div key={collab.id} className="bg-slate-700/50 rounded-lg p-4 border border-purple-500/20">
-                        <div className="flex items-center gap-3">
-                          <div className="text-3xl">{collab.avatar}</div>
-                          <div className="flex-1">
-                            <h3 className="text-white font-semibold">{collab.name}</h3>
-                            <div className="flex items-center gap-2 mt-1">
-                              <div className={`w-2 h-2 rounded-full ${collab.status === 'online' ? 'bg-green-400' : 'bg-yellow-400'}`} />
-                              <span className="text-sm text-purple-300">{collab.status}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <p className="text-xs text-purple-400 mt-2">Last edit: {collab.lastEdit}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+//           {/* Collaboration Tab */}
+//           {activeTab === 'collab' && (
+//             <motion.div
+//               key="collab"
+//               initial={{ opacity: 0, y: 20 }}
+//               animate={{ opacity: 1, y: 0 }}
+//               exit={{ opacity: 0, y: -20 }}
+//               className="h-full overflow-auto p-6"
+//             >
+//               <div className="max-w-6xl mx-auto space-y-6">
+//                 {/* Active Collaborators */}
+//                 <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30">
+//                   <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+//                     <Users className="w-5 h-5 text-purple-400" />
+//                     Active Collaborators
+//                   </h2>
+//                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+//                     {collaborators.map((collab) => (
+//                       <div key={collab.id} className="bg-slate-700/50 rounded-lg p-4 border border-purple-500/20">
+//                         <div className="flex items-center gap-3">
+//                           <div className="text-3xl">{collab.avatar}</div>
+//                           <div className="flex-1">
+//                             <h3 className="text-white font-semibold">{collab.name}</h3>
+//                             <div className="flex items-center gap-2 mt-1">
+//                               <div className={`w-2 h-2 rounded-full ${collab.status === 'online' ? 'bg-green-400' : 'bg-yellow-400'}`} />
+//                               <span className="text-sm text-purple-300">{collab.status}</span>
+//                             </div>
+//                           </div>
+//                         </div>
+//                         <p className="text-xs text-purple-400 mt-2">Last edit: {collab.lastEdit}</p>
+//                       </div>
+//                     ))}
+//                   </div>
+//                 </div>
 
-                {/* Recent Changes */}
-                <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30">
-                  <h2 className="text-xl font-bold text-white mb-4">Recent Changes</h2>
-                  <div className="space-y-3">
-                    {recentChanges.map((change, idx) => (
-                      <div key={idx} className="bg-slate-700/30 rounded-lg p-4 border border-purple-500/10">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className="text-white">
-                              <span className="font-semibold text-purple-400">{change.user}</span> {change.action}
-                            </p>
-                            <p className="text-sm text-purple-300 mt-1">Node: {change.node}</p>
-                          </div>
-                          <span className="text-xs text-purple-400">{change.time}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+//                 {/* Recent Changes */}
+//                 <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30">
+//                   <h2 className="text-xl font-bold text-white mb-4">Recent Changes</h2>
+//                   <div className="space-y-3">
+//                     {recentChanges.map((change, idx) => (
+//                       <div key={idx} className="bg-slate-700/30 rounded-lg p-4 border border-purple-500/10">
+//                         <div className="flex items-start justify-between">
+//                           <div>
+//                             <p className="text-white">
+//                               <span className="font-semibold text-purple-400">{change.user}</span> {change.action}
+//                             </p>
+//                             <p className="text-sm text-purple-300 mt-1">Node: {change.node}</p>
+//                           </div>
+//                           <span className="text-xs text-purple-400">{change.time}</span>
+//                         </div>
+//                       </div>
+//                     ))}
+//                   </div>
+//                 </div>
 
-                {/* Live Activity Feed */}
-                <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30">
-                  <h2 className="text-xl font-bold text-white mb-4">Live Activity Feed</h2>
-                  <div className="h-48 bg-slate-900/50 rounded-lg p-4 overflow-y-auto">
-                    <p className="text-purple-300 text-sm">🟢 Real-time collaboration updates will appear here...</p>
-                    <p className="text-purple-400 text-xs mt-2">WebSocket connection: Ready</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
+//                 {/* Live Activity Feed */}
+//                 <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30">
+//                   <h2 className="text-xl font-bold text-white mb-4">Live Activity Feed</h2>
+//                   <div className="h-48 bg-slate-900/50 rounded-lg p-4 overflow-y-auto">
+//                     <p className="text-purple-300 text-sm">🟢 Real-time collaboration updates will appear here...</p>
+//                     <p className="text-purple-400 text-xs mt-2">WebSocket connection: Ready</p>
+//                   </div>
+//                 </div>
+//               </div>
+//             </motion.div>
+//           )}
 
-          {/* Character Studio Tab */}
-          {activeTab === 'characters' && (
-            <motion.div
-              key="characters"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="h-full overflow-auto p-6"
-            >
-              <div className="max-w-6xl mx-auto space-y-6">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <User className="w-6 h-6 text-purple-400" />
-                    Character Studio
-                  </h2>
-                  <button
-                    onClick={() => setShowCharacterForm(!showCharacterForm)}
-                    className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg flex items-center gap-2 transition-all"
-                  >
-                    <Plus className="w-4 h-4" />
-                    New Character
-                  </button>
-                </div>
+//           {/* Character Studio Tab */}
+//           {activeTab === 'characters' && (
+//             <motion.div
+//               key="characters"
+//               initial={{ opacity: 0, y: 20 }}
+//               animate={{ opacity: 1, y: 0 }}
+//               exit={{ opacity: 0, y: -20 }}
+//               className="h-full overflow-auto p-6"
+//             >
+//               <div className="max-w-6xl mx-auto space-y-6">
+//                 <div className="flex justify-between items-center">
+//                   <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+//                     <User className="w-6 h-6 text-purple-400" />
+//                     Character Studio
+//                   </h2>
+//                   <button
+//                     onClick={() => setShowCharacterForm(!showCharacterForm)}
+//                     className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg flex items-center gap-2 transition-all"
+//                   >
+//                     <Plus className="w-4 h-4" />
+//                     New Character
+//                   </button>
+//                 </div>
 
-                {/* Character Creation Form */}
-                {showCharacterForm && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30"
-                  >
-                    <h3 className="text-xl font-bold text-white mb-4">Create New Character</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-purple-300 mb-2">Character Name</label>
-                        <input
-                          type="text"
-                          value={newCharacter.name}
-                          onChange={(e) => setNewCharacter({...newCharacter, name: e.target.value})}
-                          className="w-full bg-slate-900/50 border border-purple-500/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
-                          placeholder="e.g., Marcus the Wise"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-purple-300 mb-2">Backstory</label>
-                        <textarea
-                          value={newCharacter.backstory}
-                          onChange={(e) => setNewCharacter({...newCharacter, backstory: e.target.value})}
-                          className="w-full bg-slate-900/50 border border-purple-500/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500 h-24"
-                          placeholder="Describe their history and motivations..."
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-purple-300 mb-2">Personality</label>
-                        <input
-                          type="text"
-                          value={newCharacter.personality}
-                          onChange={(e) => setNewCharacter({...newCharacter, personality: e.target.value})}
-                          className="w-full bg-slate-900/50 border border-purple-500/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
-                          placeholder="e.g., Wise, cautious, mysterious"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-purple-300 mb-2">Traits (comma-separated)</label>
-                        <input
-                          type="text"
-                          onChange={(e) => setNewCharacter({...newCharacter, traits: e.target.value.split(',')})}
-                          className="w-full bg-slate-900/50 border border-purple-500/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
-                          placeholder="e.g., wise, patient, mysterious"
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={addCharacter}
-                          className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
-                        >
-                          Create Character
-                        </button>
-                        <button
-                          onClick={() => setShowCharacterForm(false)}
-                          className="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
+//                 {/* Character Creation Form */}
+//                 {showCharacterForm && (
+//                   <motion.div
+//                     initial={{ opacity: 0, scale: 0.95 }}
+//                     animate={{ opacity: 1, scale: 1 }}
+//                     className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30"
+//                   >
+//                     <h3 className="text-xl font-bold text-white mb-4">Create New Character</h3>
+//                     <div className="space-y-4">
+//                       <div>
+//                         <label className="block text-purple-300 mb-2">Character Name</label>
+//                         <input
+//                           type="text"
+//                           value={newCharacter.name}
+//                           onChange={(e) => setNewCharacter({...newCharacter, name: e.target.value})}
+//                           className="w-full bg-slate-900/50 border border-purple-500/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
+//                           placeholder="e.g., Marcus the Wise"
+//                         />
+//                       </div>
+//                       <div>
+//                         <label className="block text-purple-300 mb-2">Backstory</label>
+//                         <textarea
+//                           value={newCharacter.backstory}
+//                           onChange={(e) => setNewCharacter({...newCharacter, backstory: e.target.value})}
+//                           className="w-full bg-slate-900/50 border border-purple-500/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500 h-24"
+//                           placeholder="Describe their history and motivations..."
+//                         />
+//                       </div>
+//                       <div>
+//                         <label className="block text-purple-300 mb-2">Personality</label>
+//                         <input
+//                           type="text"
+//                           value={newCharacter.personality}
+//                           onChange={(e) => setNewCharacter({...newCharacter, personality: e.target.value})}
+//                           className="w-full bg-slate-900/50 border border-purple-500/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
+//                           placeholder="e.g., Wise, cautious, mysterious"
+//                         />
+//                       </div>
+//                       <div>
+//                         <label className="block text-purple-300 mb-2">Traits (comma-separated)</label>
+//                         <input
+//                           type="text"
+//                           onChange={(e) => setNewCharacter({...newCharacter, traits: e.target.value.split(',')})}
+//                           className="w-full bg-slate-900/50 border border-purple-500/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
+//                           placeholder="e.g., wise, patient, mysterious"
+//                         />
+//                       </div>
+//                       <div className="flex gap-2">
+//                         <button
+//                           onClick={addCharacter}
+//                           className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+//                         >
+//                           Create Character
+//                         </button>
+//                         <button
+//                           onClick={() => setShowCharacterForm(false)}
+//                           className="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+//                         >
+//                           Cancel
+//                         </button>
+//                       </div>
+//                     </div>
+//                   </motion.div>
+//                 )}
 
-                {/* Character List */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {characters.map((character) => (
-                    <motion.div
-                      key={character.id}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30 hover:border-purple-500/50 transition-all"
-                    >
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <h3 className="text-xl font-bold text-white mb-1">{character.name}</h3>
-                          <p className="text-sm text-purple-300">{character.personality}</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <button className="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">
-                            <Edit className="w-4 h-4 text-purple-400" />
-                          </button>
-                          <button 
-                            onClick={() => deleteCharacter(character.id)}
-                            className="p-2 bg-slate-700 hover:bg-red-600 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4 text-red-400" />
-                          </button>
-                        </div>
-                      </div>
+//                 {/* Character List */}
+//                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+//                   {characters.map((character) => (
+//                     <motion.div
+//                       key={character.id}
+//                       initial={{ opacity: 0, scale: 0.9 }}
+//                       animate={{ opacity: 1, scale: 1 }}
+//                       className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30 hover:border-purple-500/50 transition-all"
+//                     >
+//                       <div className="flex justify-between items-start mb-4">
+//                         <div>
+//                           <h3 className="text-xl font-bold text-white mb-1">{character.name}</h3>
+//                           <p className="text-sm text-purple-300">{character.personality}</p>
+//                         </div>
+//                         <div className="flex gap-2">
+//                           <button className="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">
+//                             <Edit className="w-4 h-4 text-purple-400" />
+//                           </button>
+//                           <button 
+//                             onClick={() => deleteCharacter(character.id)}
+//                             className="p-2 bg-slate-700 hover:bg-red-600 rounded-lg transition-colors"
+//                           >
+//                             <Trash2 className="w-4 h-4 text-red-400" />
+//                           </button>
+//                         </div>
+//                       </div>
                       
-                      <p className="text-purple-200 text-sm mb-4">{character.backstory}</p>
+//                       <p className="text-purple-200 text-sm mb-4">{character.backstory}</p>
                       
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {character.traits.map((trait, idx) => (
-                          <span key={idx} className="px-3 py-1 bg-purple-900/50 text-purple-300 rounded-full text-xs">
-                            {trait}
-                          </span>
-                        ))}
-                      </div>
+//                       <div className="flex flex-wrap gap-2 mb-4">
+//                         {character.traits.map((trait, idx) => (
+//                           <span key={idx} className="px-3 py-1 bg-purple-900/50 text-purple-300 rounded-full text-xs">
+//                             {trait}
+//                           </span>
+//                         ))}
+//                       </div>
 
-                      <div className="border-t border-purple-500/20 pt-4">
-                        {character.hasAI ? (
-                          <div className="flex items-center gap-2 text-green-400 text-sm">
-                            <Sparkles className="w-4 h-4" />
-                            <span>AI Agent Active</span>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => createAIAgent(character.id)}
-                            className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg flex items-center justify-center gap-2 transition-all"
-                          >
-                            <Sparkles className="w-4 h-4" />
-                            Create AI Agent
-                          </button>
-                        )}
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
+//                       <div className="border-t border-purple-500/20 pt-4">
+//                         {character.hasAI ? (
+//                           <div className="flex items-center gap-2 text-green-400 text-sm">
+//                             <Sparkles className="w-4 h-4" />
+//                             <span>AI Agent Active</span>
+//                           </div>
+//                         ) : (
+//                           <button
+//                             onClick={() => createAIAgent(character.id)}
+//                             className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg flex items-center justify-center gap-2 transition-all"
+//                           >
+//                             <Sparkles className="w-4 h-4" />
+//                             Create AI Agent
+//                           </button>
+//                         )}
+//                       </div>
+//                     </motion.div>
+//                   ))}
+//                 </div>
+//               </div>
+//             </motion.div>
+//           )}
 
-          {/* AI Character Chat Tab */}
-          {activeTab === 'ai-chat' && (
-            <motion.div
-              key="ai-chat"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="h-full flex"
-            >
-              {/* Character Selector Sidebar */}
-              <div className="w-80 bg-slate-800/50 backdrop-blur-sm border-r border-purple-500/30 p-4 overflow-y-auto">
-                <h3 className="text-white font-bold mb-4">AI Characters</h3>
-                <div className="space-y-2">
-                  {characters.filter(c => c.hasAI).map((character) => (
-                    <button
-                      key={character.id}
-                      onClick={() => {
-                        setSelectedCharacter(character);
-                        setChatMessages([]);
-                      }}
-                      className={`w-full p-4 rounded-lg text-left transition-all ${
-                        selectedCharacter?.id === character.id
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-slate-700/50 text-purple-300 hover:bg-slate-700'
-                      }`}
-                    >
-                      <div className="font-semibold mb-1">{character.name}</div>
-                      <div className="text-xs opacity-75">{character.personality}</div>
-                    </button>
-                  ))}
-                </div>
-                {characters.filter(c => c.hasAI).length === 0 && (
-                  <p className="text-purple-400 text-sm">No AI agents created yet. Create one in Character Studio!</p>
-                )}
-              </div>
+//           {/* AI Character Chat Tab */}
+//           {activeTab === 'ai-chat' && (
+//             <motion.div
+//               key="ai-chat"
+//               initial={{ opacity: 0, y: 20 }}
+//               animate={{ opacity: 1, y: 0 }}
+//               exit={{ opacity: 0, y: -20 }}
+//               className="h-full flex"
+//             >
+//               {/* Character Selector Sidebar */}
+//               <div className="w-80 bg-slate-800/50 backdrop-blur-sm border-r border-purple-500/30 p-4 overflow-y-auto">
+//                 <h3 className="text-white font-bold mb-4">AI Characters</h3>
+//                 <div className="space-y-2">
+//                   {characters.filter(c => c.hasAI).map((character) => (
+//                     <button
+//                       key={character.id}
+//                       onClick={() => {
+//                         setSelectedCharacter(character);
+//                         setChatMessages([]);
+//                       }}
+//                       className={`w-full p-4 rounded-lg text-left transition-all ${
+//                         selectedCharacter?.id === character.id
+//                           ? 'bg-purple-600 text-white'
+//                           : 'bg-slate-700/50 text-purple-300 hover:bg-slate-700'
+//                       }`}
+//                     >
+//                       <div className="font-semibold mb-1">{character.name}</div>
+//                       <div className="text-xs opacity-75">{character.personality}</div>
+//                     </button>
+//                   ))}
+//                 </div>
+//                 {characters.filter(c => c.hasAI).length === 0 && (
+//                   <p className="text-purple-400 text-sm">No AI agents created yet. Create one in Character Studio!</p>
+//                 )}
+//               </div>
 
-              {/* Chat Area */}
-              <div className="flex-1 flex flex-col">
-                {selectedCharacter ? (
-                  <>
-                    {/* Chat Header */}
-                    <div className="bg-slate-800/50 backdrop-blur-sm border-b border-purple-500/30 p-4">
-                      <h2 className="text-xl font-bold text-white">Chat with {selectedCharacter.name}</h2>
-                      <p className="text-sm text-purple-300">{selectedCharacter.personality}</p>
-                    </div>
+//               {/* Chat Area */}
+//               <div className="flex-1 flex flex-col">
+//                 {selectedCharacter ? (
+//                   <>
+//                     {/* Chat Header */}
+//                     <div className="bg-slate-800/50 backdrop-blur-sm border-b border-purple-500/30 p-4">
+//                       <h2 className="text-xl font-bold text-white">Chat with {selectedCharacter.name}</h2>
+//                       <p className="text-sm text-purple-300">{selectedCharacter.personality}</p>
+//                     </div>
 
-                    {/* Messages */}
-                    <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                      {chatMessages.length === 0 && (
-                        <div className="text-center text-purple-400 mt-12">
-                          <MessageSquare className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                          <p>Start a conversation with {selectedCharacter.name}</p>
-                          <p className="text-sm mt-2 text-purple-500">They'll respond based on their personality and backstory</p>
-                        </div>
-                      )}
-                      {chatMessages.map((msg) => (
-                        <div
-                          key={msg.id}
-                          className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                        >
-                          <div
-                            className={`max-w-lg rounded-xl p-4 ${
-                              msg.sender === 'user'
-                                ? 'bg-purple-600 text-white'
-                                : 'bg-slate-800/50 text-purple-100 border border-purple-500/30'
-                            }`}
-                          >
-                            <p className="mb-1">{msg.text}</p>
-                            <p className="text-xs opacity-75">{msg.timestamp}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+//                     {/* Messages */}
+//                     <div className="flex-1 overflow-y-auto p-6 space-y-4">
+//                       {chatMessages.length === 0 && (
+//                         <div className="text-center text-purple-400 mt-12">
+//                           <MessageSquare className="w-16 h-16 mx-auto mb-4 opacity-50" />
+//                           <p>Start a conversation with {selectedCharacter.name}</p>
+//                           <p className="text-sm mt-2 text-purple-500">They'll respond based on their personality and backstory</p>
+//                         </div>
+//                       )}
+//                       {chatMessages.map((msg) => (
+//                         <div
+//                           key={msg.id}
+//                           className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+//                         >
+//                           <div
+//                             className={`max-w-lg rounded-xl p-4 ${
+//                               msg.sender === 'user'
+//                                 ? 'bg-purple-600 text-white'
+//                                 : 'bg-slate-800/50 text-purple-100 border border-purple-500/30'
+//                             }`}
+//                           >
+//                             <p className="mb-1">{msg.text}</p>
+//                             <p className="text-xs opacity-75">{msg.timestamp}</p>
+//                           </div>
+//                         </div>
+//                       ))}
+//                     </div>
 
-                    {/* Input Area */}
-                    <div className="bg-slate-800/50 backdrop-blur-sm border-t border-purple-500/30 p-4">
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={currentMessage}
-                          onChange={(e) => setCurrentMessage(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                          className="flex-1 bg-slate-900/50 border border-purple-500/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500"
-                          placeholder="Type your message..."
-                        />
-                        <button
-                          onClick={sendMessage}
-                          className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg flex items-center gap-2 transition-all"
-                        >
-                          <Send className="w-4 h-4" />
-                          Send
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex-1 flex items-center justify-center">
-                    <div className="text-center text-purple-400">
-                      <MessageSquare className="w-24 h-24 mx-auto mb-4 opacity-30" />
-                      <p className="text-xl">Select a character to start chatting</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </div>
-  );
-};
+//                     {/* Input Area */}
+//                     <div className="bg-slate-800/50 backdrop-blur-sm border-t border-purple-500/30 p-4">
+//                       <div className="flex gap-2">
+//                         <input
+//                           type="text"
+//                           value={currentMessage}
+//                           onChange={(e) => setCurrentMessage(e.target.value)}
+//                           onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+//                           className="flex-1 bg-slate-900/50 border border-purple-500/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500"
+//                           placeholder="Type your message..."
+//                         />
+//                         <button
+//                           onClick={sendMessage}
+//                           className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg flex items-center gap-2 transition-all"
+//                         >
+//                           <Send className="w-4 h-4" />
+//                           Send
+//                         </button>
+//                       </div>
+//                     </div>
+//                   </>
+//                 ) : (
+//                   <div className="flex-1 flex items-center justify-center">
+//                     <div className="text-center text-purple-400">
+//                       <MessageSquare className="w-24 h-24 mx-auto mb-4 opacity-30" />
+//                       <p className="text-xl">Select a character to start chatting</p>
+//                     </div>
+//                   </div>
+//                 )}
+//               </div>
+//             </motion.div>
+//           )}
+//         </AnimatePresence>
+//       </div>
+//     </div>
+//   );
+// };
 
-export default StoryForgeEditor;
+// export default StoryForgeEditor;
 
 
 
@@ -1165,409 +1165,409 @@ export default StoryForgeEditor;
 
 
 //STORY EDITING PAGE
-// "use client"
-// import React, { useState } from 'react';
-// import { ArrowLeft, Save, Sparkles, Plus, Trash2, GripVertical, Eye, Edit3, Calendar, Tag, MessageSquare } from 'lucide-react';
-// import { motion, AnimatePresence } from 'framer-motion';
+"use client"
+import React, { useState } from 'react';
+import { ArrowLeft, Save, Sparkles, Plus, Trash2, GripVertical, Eye, Edit3, Calendar, Tag, MessageSquare } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// export default function StoryNodeEditor() {
-//   const [saveStatus, setSaveStatus] = useState('saved'); // saved, saving, unsaved
-//   const [previewMode, setPreviewMode] = useState(false);
+export default function StoryNodeEditor() {
+  const [saveStatus, setSaveStatus] = useState('saved'); // saved, saving, unsaved
+  const [previewMode, setPreviewMode] = useState(false);
   
-//   const [nodeData, setNodeData] = useState({
-//     id: 'node_001',
-//     title: 'The Hero\'s Call',
-//     type: 'choice',
-//     content: 'A mysterious stranger approaches you in the tavern, their hood concealing their face. They slide a sealed letter across the wooden table. "The kingdom needs you," they whisper urgently. "Will you answer the call?"',
-//     tags: ['intro', 'quest-start'],
-//     emotionalTone: 'mysterious',
-//     choices: [
-//       { id: 1, text: 'Accept the Quest', consequence: 'Begin the adventure', targetNode: 'node_002', color: 'green' },
-//       { id: 2, text: 'Refuse and Stay Home', consequence: 'Miss the adventure', targetNode: 'node_003', color: 'red' }
-//     ]
-//   });
+  const [nodeData, setNodeData] = useState({
+    id: 'node_001',
+    title: 'The Hero\'s Call',
+    type: 'choice',
+    content: 'A mysterious stranger approaches you in the tavern, their hood concealing their face. They slide a sealed letter across the wooden table. "The kingdom needs you," they whisper urgently. "Will you answer the call?"',
+    tags: ['intro', 'quest-start'],
+    emotionalTone: 'mysterious',
+    choices: [
+      { id: 1, text: 'Accept the Quest', consequence: 'Begin the adventure', targetNode: 'node_002', color: 'green' },
+      { id: 2, text: 'Refuse and Stay Home', consequence: 'Miss the adventure', targetNode: 'node_003', color: 'red' }
+    ]
+  });
 
-//   const nodeTypes = [
-//     { value: 'story', label: 'Story', icon: '📖' },
-//     { value: 'choice', label: 'Choice', icon: '🔀' },
-//     { value: 'ending', label: 'Ending', icon: '🏁' },
-//     { value: 'character', label: 'Character', icon: '👤' }
-//   ];
+  const nodeTypes = [
+    { value: 'story', label: 'Story', icon: '📖' },
+    { value: 'choice', label: 'Choice', icon: '🔀' },
+    { value: 'ending', label: 'Ending', icon: '🏁' },
+    { value: 'character', label: 'Character', icon: '👤' }
+  ];
 
-//   const emotionalTones = ['mysterious', 'tense', 'hopeful', 'dark', 'peaceful', 'action'];
-//   const choiceColors = ['green', 'red', 'blue', 'purple', 'yellow'];
+  const emotionalTones = ['mysterious', 'tense', 'hopeful', 'dark', 'peaceful', 'action'];
+  const choiceColors = ['green', 'red', 'blue', 'purple', 'yellow'];
 
-//   const handleContentChange = (e) => {
-//     setNodeData({ ...nodeData, content: e.target.value });
-//     setSaveStatus('unsaved');
-//   };
+  const handleContentChange = (e) => {
+    setNodeData({ ...nodeData, content: e.target.value });
+    setSaveStatus('unsaved');
+  };
 
-//   const handleTitleChange = (e) => {
-//     setNodeData({ ...nodeData, title: e.target.value });
-//     setSaveStatus('unsaved');
-//   };
+  const handleTitleChange = (e) => {
+    setNodeData({ ...nodeData, title: e.target.value });
+    setSaveStatus('unsaved');
+  };
 
-//   const addChoice = () => {
-//     const newChoice = {
-//       id: Date.now(),
-//       text: 'New Choice',
-//       consequence: '',
-//       targetNode: '',
-//       color: 'blue'
-//     };
-//     setNodeData({ ...nodeData, choices: [...nodeData.choices, newChoice] });
-//     setSaveStatus('unsaved');
-//   };
+  const addChoice = () => {
+    const newChoice = {
+      id: Date.now(),
+      text: 'New Choice',
+      consequence: '',
+      targetNode: '',
+      color: 'blue'
+    };
+    setNodeData({ ...nodeData, choices: [...nodeData.choices, newChoice] });
+    setSaveStatus('unsaved');
+  };
 
-//   const updateChoice = (id, field, value) => {
-//     const updatedChoices = nodeData.choices.map(choice =>
-//       choice.id === id ? { ...choice, [field]: value } : choice
-//     );
-//     setNodeData({ ...nodeData, choices: updatedChoices });
-//     setSaveStatus('unsaved');
-//   };
+  const updateChoice = (id, field, value) => {
+    const updatedChoices = nodeData.choices.map(choice =>
+      choice.id === id ? { ...choice, [field]: value } : choice
+    );
+    setNodeData({ ...nodeData, choices: updatedChoices });
+    setSaveStatus('unsaved');
+  };
 
-//   const deleteChoice = (id) => {
-//     setNodeData({ ...nodeData, choices: nodeData.choices.filter(c => c.id !== id) });
-//     setSaveStatus('unsaved');
-//   };
+  const deleteChoice = (id) => {
+    setNodeData({ ...nodeData, choices: nodeData.choices.filter(c => c.id !== id) });
+    setSaveStatus('unsaved');
+  };
 
-//   const handleSave = () => {
-//     setSaveStatus('saving');
-//     // Simulate save operation
-//     setTimeout(() => setSaveStatus('saved'), 1000);
-//   };
+  const handleSave = () => {
+    setSaveStatus('saving');
+    // Simulate save operation
+    setTimeout(() => setSaveStatus('saved'), 1000);
+  };
 
-//   const getColorClasses = (color) => {
-//     const colorMap = {
-//       green: 'bg-emerald-500/20 border-emerald-500 text-emerald-300',
-//       red: 'bg-red-500/20 border-red-500 text-red-300',
-//       blue: 'bg-blue-500/20 border-blue-500 text-blue-300',
-//       purple: 'bg-purple-500/20 border-purple-500 text-purple-300',
-//       yellow: 'bg-yellow-500/20 border-yellow-500 text-yellow-300'
-//     };
-//     return colorMap[color] || colorMap.blue;
-//   };
+  const getColorClasses = (color) => {
+    const colorMap = {
+      green: 'bg-emerald-500/20 border-emerald-500 text-emerald-300',
+      red: 'bg-red-500/20 border-red-500 text-red-300',
+      blue: 'bg-blue-500/20 border-blue-500 text-blue-300',
+      purple: 'bg-purple-500/20 border-purple-500 text-purple-300',
+      yellow: 'bg-yellow-500/20 border-yellow-500 text-yellow-300'
+    };
+    return colorMap[color] || colorMap.blue;
+  };
 
-//   return (
-//     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
-//       {/* Header */}
-//       <header className="border-b border-slate-800 bg-slate-950/50 backdrop-blur-lg sticky top-0 z-50">
-//         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-//           <div className="flex items-center gap-4">
-//             <button className="p-2 hover:bg-slate-800 rounded-lg transition-colors">
-//               <ArrowLeft className="w-5 h-5" />
-//             </button>
-//             <div>
-//               <div className="flex items-center gap-2">
-//                 <Edit3 className="w-5 h-5 text-purple-400" />
-//                 <h1 className="text-xl font-bold">Story Editor</h1>
-//               </div>
-//               <div className="flex items-center gap-2 mt-1">
-//                 <span className="text-xs text-slate-400">ID: {nodeData.id}</span>
-//                 <span className="text-xs text-slate-600">•</span>
-//                 <div className="flex items-center gap-1">
-//                   {saveStatus === 'saved' && (
-//                     <span className="text-xs text-emerald-400 flex items-center gap-1">
-//                       <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
-//                       Saved
-//                     </span>
-//                   )}
-//                   {saveStatus === 'saving' && (
-//                     <span className="text-xs text-blue-400 flex items-center gap-1">
-//                       <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse" />
-//                       Saving...
-//                     </span>
-//                   )}
-//                   {saveStatus === 'unsaved' && (
-//                     <span className="text-xs text-yellow-400 flex items-center gap-1">
-//                       <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full" />
-//                       Unsaved changes
-//                     </span>
-//                   )}
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
+      {/* Header */}
+      <header className="border-b border-slate-800 bg-slate-950/50 backdrop-blur-lg sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button className="p-2 hover:bg-slate-800 rounded-lg transition-colors">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div>
+              <div className="flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-purple-400" />
+                <h1 className="text-xl font-bold">Story Editor</h1>
+              </div>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs text-slate-400">ID: {nodeData.id}</span>
+                <span className="text-xs text-slate-600">•</span>
+                <div className="flex items-center gap-1">
+                  {saveStatus === 'saved' && (
+                    <span className="text-xs text-emerald-400 flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
+                      Saved
+                    </span>
+                  )}
+                  {saveStatus === 'saving' && (
+                    <span className="text-xs text-blue-400 flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse" />
+                      Saving...
+                    </span>
+                  )}
+                  {saveStatus === 'unsaved' && (
+                    <span className="text-xs text-yellow-400 flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full" />
+                      Unsaved changes
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
 
-//           <div className="flex items-center gap-3">
-//             <button
-//               onClick={() => setPreviewMode(!previewMode)}
-//               className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 ${
-//                 previewMode
-//                   ? 'bg-purple-600 text-white'
-//                   : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
-//               }`}
-//             >
-//               <Eye className="w-4 h-4" />
-//               {previewMode ? 'Edit Mode' : 'Preview'}
-//             </button>
-//             <button className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-all flex items-center gap-2">
-//               <Sparkles className="w-4 h-4" />
-//               AI Assist
-//             </button>
-//             <button
-//               onClick={handleSave}
-//               disabled={saveStatus === 'saved'}
-//               className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 ${
-//                 saveStatus === 'saved'
-//                   ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-//                   : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-//               }`}
-//             >
-//               <Save className="w-4 h-4" />
-//               Save Story
-//             </button>
-//           </div>
-//         </div>
-//       </header>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setPreviewMode(!previewMode)}
+              className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 ${
+                previewMode
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+              }`}
+            >
+              <Eye className="w-4 h-4" />
+              {previewMode ? 'Edit Mode' : 'Preview'}
+            </button>
+            <button className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-all flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              AI Assist
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saveStatus === 'saved'}
+              className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 ${
+                saveStatus === 'saved'
+                  ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+              }`}
+            >
+              <Save className="w-4 h-4" />
+              Save Story
+            </button>
+          </div>
+        </div>
+      </header>
 
-//       <div className="max-w-7xl mx-auto px-6 py-8">
-//         <AnimatePresence mode="wait">
-//           {!previewMode ? (
-//             <motion.div
-//               key="edit"
-//               initial={{ opacity: 0, y: 20 }}
-//               animate={{ opacity: 1, y: 0 }}
-//               exit={{ opacity: 0, y: -20 }}
-//               className="space-y-6"
-//             >
-//               {/* Node Configuration */}
-//               <div className="bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800 p-6">
-//                 <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-//                   <Tag className="w-5 h-5 text-purple-400" />
-//                   Node Configuration
-//                 </h2>
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <AnimatePresence mode="wait">
+          {!previewMode ? (
+            <motion.div
+              key="edit"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
+            >
+              {/* Node Configuration */}
+              <div className="bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800 p-6">
+                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Tag className="w-5 h-5 text-purple-400" />
+                  Node Configuration
+                </h2>
                 
-//                 <div className="grid grid-cols-2 gap-4 mb-4">
-//                   <div>
-//                     <label className="block text-sm text-slate-400 mb-2">Node Title</label>
-//                     <input
-//                       type="text"
-//                       value={nodeData.title}
-//                       onChange={handleTitleChange}
-//                       className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500 transition-colors"
-//                       placeholder="Enter node title..."
-//                     />
-//                   </div>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-2">Node Title</label>
+                    <input
+                      type="text"
+                      value={nodeData.title}
+                      onChange={handleTitleChange}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500 transition-colors"
+                      placeholder="Enter node title..."
+                    />
+                  </div>
                   
-//                   <div>
-//                     <label className="block text-sm text-slate-400 mb-2">Node Type</label>
-//                     <select
-//                       value={nodeData.type}
-//                       onChange={(e) => setNodeData({ ...nodeData, type: e.target.value })}
-//                       className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500 transition-colors"
-//                     >
-//                       {nodeTypes.map(type => (
-//                         <option key={type.value} value={type.value}>
-//                           {type.icon} {type.label}
-//                         </option>
-//                       ))}
-//                     </select>
-//                   </div>
-//                 </div>
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-2">Node Type</label>
+                    <select
+                      value={nodeData.type}
+                      onChange={(e) => setNodeData({ ...nodeData, type: e.target.value })}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500 transition-colors"
+                    >
+                      {nodeTypes.map(type => (
+                        <option key={type.value} value={type.value}>
+                          {type.icon} {type.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
 
-//                 <div className="grid grid-cols-2 gap-4">
-//                   <div>
-//                     <label className="block text-sm text-slate-400 mb-2">Emotional Tone</label>
-//                     <select
-//                       value={nodeData.emotionalTone}
-//                       onChange={(e) => setNodeData({ ...nodeData, emotionalTone: e.target.value })}
-//                       className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500 transition-colors"
-//                     >
-//                       {emotionalTones.map(tone => (
-//                         <option key={tone} value={tone}>
-//                           {tone.charAt(0).toUpperCase() + tone.slice(1)}
-//                         </option>
-//                       ))}
-//                     </select>
-//                   </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-2">Emotional Tone</label>
+                    <select
+                      value={nodeData.emotionalTone}
+                      onChange={(e) => setNodeData({ ...nodeData, emotionalTone: e.target.value })}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500 transition-colors"
+                    >
+                      {emotionalTones.map(tone => (
+                        <option key={tone} value={tone}>
+                          {tone.charAt(0).toUpperCase() + tone.slice(1)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   
-//                   <div>
-//                     <label className="block text-sm text-slate-400 mb-2">Tags</label>
-//                     <input
-//                       type="text"
-//                       value={nodeData.tags.join(', ')}
-//                       onChange={(e) => setNodeData({ ...nodeData, tags: e.target.value.split(',').map(t => t.trim()) })}
-//                       className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500 transition-colors"
-//                       placeholder="quest-start, intro, combat"
-//                     />
-//                   </div>
-//                 </div>
-//               </div>
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-2">Tags</label>
+                    <input
+                      type="text"
+                      value={nodeData.tags.join(', ')}
+                      onChange={(e) => setNodeData({ ...nodeData, tags: e.target.value.split(',').map(t => t.trim()) })}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500 transition-colors"
+                      placeholder="quest-start, intro, combat"
+                    />
+                  </div>
+                </div>
+              </div>
 
-//               {/* Content Editor */}
-//               <div className="bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800 p-6">
-//                 <div className="flex items-center justify-between mb-4">
-//                   <h2 className="text-lg font-semibold flex items-center gap-2">
-//                     <MessageSquare className="w-5 h-5 text-purple-400" />
-//                     Story Content
-//                   </h2>
-//                   <span className="text-xs text-slate-400">
-//                     {nodeData.content.length} characters
-//                   </span>
-//                 </div>
+              {/* Content Editor */}
+              <div className="bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5 text-purple-400" />
+                    Story Content
+                  </h2>
+                  <span className="text-xs text-slate-400">
+                    {nodeData.content.length} characters
+                  </span>
+                </div>
                 
-//                 <textarea
-//                   value={nodeData.content}
-//                   onChange={handleContentChange}
-//                   className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500 transition-colors min-h-[200px] resize-y font-serif text-slate-200 leading-relaxed"
-//                   placeholder="Write your story content here..."
-//                 />
+                <textarea
+                  value={nodeData.content}
+                  onChange={handleContentChange}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500 transition-colors min-h-[200px] resize-y font-serif text-slate-200 leading-relaxed"
+                  placeholder="Write your story content here..."
+                />
                 
-//                 <div className="mt-4 flex items-center gap-2 text-xs text-slate-400">
-//                   <Calendar className="w-4 h-4" />
-//                   <span>Last edited: 2 minutes ago</span>
-//                 </div>
-//               </div>
+                <div className="mt-4 flex items-center gap-2 text-xs text-slate-400">
+                  <Calendar className="w-4 h-4" />
+                  <span>Last edited: 2 minutes ago</span>
+                </div>
+              </div>
 
-//               {/* Choices Manager */}
-//               {nodeData.type === 'choice' && (
-//                 <div className="bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800 p-6">
-//                   <div className="flex items-center justify-between mb-4">
-//                     <h2 className="text-lg font-semibold">Player Choices</h2>
-//                     <button
-//                       onClick={addChoice}
-//                       className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-all flex items-center gap-2 text-sm"
-//                     >
-//                       <Plus className="w-4 h-4" />
-//                       Add Choice
-//                     </button>
-//                   </div>
+              {/* Choices Manager */}
+              {nodeData.type === 'choice' && (
+                <div className="bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold">Player Choices</h2>
+                    <button
+                      onClick={addChoice}
+                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-all flex items-center gap-2 text-sm"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Choice
+                    </button>
+                  </div>
 
-//                   <div className="space-y-3">
-//                     {nodeData.choices.map((choice, index) => (
-//                       <motion.div
-//                         key={choice.id}
-//                         initial={{ opacity: 0, x: -20 }}
-//                         animate={{ opacity: 1, x: 0 }}
-//                         transition={{ delay: index * 0.1 }}
-//                         className={`border-2 rounded-lg p-4 ${getColorClasses(choice.color)}`}
-//                       >
-//                         <div className="flex items-start gap-3">
-//                           <GripVertical className="w-5 h-5 text-slate-500 mt-1 cursor-grab" />
+                  <div className="space-y-3">
+                    {nodeData.choices.map((choice, index) => (
+                      <motion.div
+                        key={choice.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className={`border-2 rounded-lg p-4 ${getColorClasses(choice.color)}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <GripVertical className="w-5 h-5 text-slate-500 mt-1 cursor-grab" />
                           
-//                           <div className="flex-1 space-y-3">
-//                             <div className="grid grid-cols-2 gap-3">
-//                               <div>
-//                                 <label className="block text-xs text-slate-400 mb-1">Choice Text</label>
-//                                 <input
-//                                   type="text"
-//                                   value={choice.text}
-//                                   onChange={(e) => updateChoice(choice.id, 'text', e.target.value)}
-//                                   className="w-full bg-slate-950/50 border border-slate-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-purple-500"
-//                                   placeholder="What the player sees..."
-//                                 />
-//                               </div>
+                          <div className="flex-1 space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-xs text-slate-400 mb-1">Choice Text</label>
+                                <input
+                                  type="text"
+                                  value={choice.text}
+                                  onChange={(e) => updateChoice(choice.id, 'text', e.target.value)}
+                                  className="w-full bg-slate-950/50 border border-slate-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-purple-500"
+                                  placeholder="What the player sees..."
+                                />
+                              </div>
                               
-//                               <div>
-//                                 <label className="block text-xs text-slate-400 mb-1">Color</label>
-//                                 <select
-//                                   value={choice.color}
-//                                   onChange={(e) => updateChoice(choice.id, 'color', e.target.value)}
-//                                   className="w-full bg-slate-950/50 border border-slate-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-purple-500"
-//                                 >
-//                                   {choiceColors.map(color => (
-//                                     <option key={color} value={color}>
-//                                       {color.charAt(0).toUpperCase() + color.slice(1)}
-//                                     </option>
-//                                   ))}
-//                                 </select>
-//                               </div>
-//                             </div>
+                              <div>
+                                <label className="block text-xs text-slate-400 mb-1">Color</label>
+                                <select
+                                  value={choice.color}
+                                  onChange={(e) => updateChoice(choice.id, 'color', e.target.value)}
+                                  className="w-full bg-slate-950/50 border border-slate-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-purple-500"
+                                >
+                                  {choiceColors.map(color => (
+                                    <option key={color} value={color}>
+                                      {color.charAt(0).toUpperCase() + color.slice(1)}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
 
-//                             <div className="grid grid-cols-2 gap-3">
-//                               <div>
-//                                 <label className="block text-xs text-slate-400 mb-1">Consequence</label>
-//                                 <input
-//                                   type="text"
-//                                   value={choice.consequence}
-//                                   onChange={(e) => updateChoice(choice.id, 'consequence', e.target.value)}
-//                                   className="w-full bg-slate-950/50 border border-slate-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-purple-500"
-//                                   placeholder="Brief description..."
-//                                 />
-//                               </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-xs text-slate-400 mb-1">Consequence</label>
+                                <input
+                                  type="text"
+                                  value={choice.consequence}
+                                  onChange={(e) => updateChoice(choice.id, 'consequence', e.target.value)}
+                                  className="w-full bg-slate-950/50 border border-slate-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-purple-500"
+                                  placeholder="Brief description..."
+                                />
+                              </div>
                               
-//                               <div>
-//                                 <label className="block text-xs text-slate-400 mb-1">Target Node</label>
-//                                 <input
-//                                   type="text"
-//                                   value={choice.targetNode}
-//                                   onChange={(e) => updateChoice(choice.id, 'targetNode', e.target.value)}
-//                                   className="w-full bg-slate-950/50 border border-slate-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-purple-500"
-//                                   placeholder="node_002"
-//                                 />
-//                               </div>
-//                             </div>
-//                           </div>
+                              <div>
+                                <label className="block text-xs text-slate-400 mb-1">Target Node</label>
+                                <input
+                                  type="text"
+                                  value={choice.targetNode}
+                                  onChange={(e) => updateChoice(choice.id, 'targetNode', e.target.value)}
+                                  className="w-full bg-slate-950/50 border border-slate-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-purple-500"
+                                  placeholder="node_002"
+                                />
+                              </div>
+                            </div>
+                          </div>
 
-//                           <button
-//                             onClick={() => deleteChoice(choice.id)}
-//                             className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
-//                           >
-//                             <Trash2 className="w-4 h-4 text-red-400" />
-//                           </button>
-//                         </div>
-//                       </motion.div>
-//                     ))}
-//                   </div>
-//                 </div>
-//               )}
-//             </motion.div>
-//           ) : (
-//             <motion.div
-//               key="preview"
-//               initial={{ opacity: 0, y: 20 }}
-//               animate={{ opacity: 1, y: 0 }}
-//               exit={{ opacity: 0, y: -20 }}
-//               className="max-w-3xl mx-auto"
-//             >
-//               {/* Preview Mode */}
-//               <div className="bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800 p-8">
-//                 <div className="mb-6">
-//                   <div className="inline-block px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs mb-4">
-//                     {nodeData.emotionalTone}
-//                   </div>
-//                   <h1 className="text-3xl font-bold mb-4">{nodeData.title}</h1>
-//                 </div>
+                          <button
+                            onClick={() => deleteChoice(choice.id)}
+                            className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-400" />
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="preview"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="max-w-3xl mx-auto"
+            >
+              {/* Preview Mode */}
+              <div className="bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800 p-8">
+                <div className="mb-6">
+                  <div className="inline-block px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs mb-4">
+                    {nodeData.emotionalTone}
+                  </div>
+                  <h1 className="text-3xl font-bold mb-4">{nodeData.title}</h1>
+                </div>
 
-//                 <div className="prose prose-invert mb-8">
-//                   <p className="text-lg text-slate-300 leading-relaxed font-serif">
-//                     {nodeData.content}
-//                   </p>
-//                 </div>
+                <div className="prose prose-invert mb-8">
+                  <p className="text-lg text-slate-300 leading-relaxed font-serif">
+                    {nodeData.content}
+                  </p>
+                </div>
 
-//                 {nodeData.type === 'choice' && nodeData.choices.length > 0 && (
-//                   <div className="space-y-3">
-//                     <p className="text-sm text-slate-400 mb-4">Choose your path:</p>
-//                     {nodeData.choices.map((choice, index) => (
-//                       <motion.button
-//                         key={choice.id}
-//                         initial={{ opacity: 0, x: -20 }}
-//                         animate={{ opacity: 1, x: 0 }}
-//                         transition={{ delay: index * 0.1 }}
-//                         className={`w-full text-left p-4 rounded-lg border-2 transition-all hover:scale-[1.02] ${getColorClasses(choice.color)}`}
-//                       >
-//                         <div className="font-semibold mb-1">{choice.text}</div>
-//                         {choice.consequence && (
-//                           <div className="text-sm opacity-70">{choice.consequence}</div>
-//                         )}
-//                       </motion.button>
-//                     ))}
-//                   </div>
-//                 )}
-//               </div>
+                {nodeData.type === 'choice' && nodeData.choices.length > 0 && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-slate-400 mb-4">Choose your path:</p>
+                    {nodeData.choices.map((choice, index) => (
+                      <motion.button
+                        key={choice.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className={`w-full text-left p-4 rounded-lg border-2 transition-all hover:scale-[1.02] ${getColorClasses(choice.color)}`}
+                      >
+                        <div className="font-semibold mb-1">{choice.text}</div>
+                        {choice.consequence && (
+                          <div className="text-sm opacity-70">{choice.consequence}</div>
+                        )}
+                      </motion.button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-//               <div className="mt-6 text-center text-sm text-slate-400">
-//                 This is how your story node will appear to players
-//               </div>
-//             </motion.div>
-//           )}
-//         </AnimatePresence>
-//       </div>
-//     </div>
-//   );
-// }
+              <div className="mt-6 text-center text-sm text-slate-400">
+                This is how your story node will appear to players
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
 
 
 

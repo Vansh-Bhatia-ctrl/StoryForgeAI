@@ -31,7 +31,7 @@ const StoryEditorNavbar = ({ storyId }) => {
 
   return (
     <>
-      <div className="bg-custom-gray-500 w-full p-3 pt-24 overflow-x-auto ">
+      <div className="bg-custom-gray-500 w-full p-3 pt-24 overflow-x-auto">
         <div className="flex gap-6">
           {OPTIONS.map((opt) => {
             const Icon = opt.icon;
