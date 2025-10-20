@@ -1,14 +1,14 @@
 import ProtectedRoute from "@/app/components/ProtectedRoute";
-import StoryEditor from "@/app/components/StoryEditor";
+import StoryEditorNavbar from "@/app/components/StoryEditor";
 import React from "react";
 
 const page = async ({ params }) => {
-  const { nodeId } = await params;
+  const { storyId } = await params;
 
   return (
     <>
       <ProtectedRoute>
-        <StoryEditor storyId={nodeId} />
+        <StoryEditorNavbar storyId={storyId} />
       </ProtectedRoute>
     </>
   );
