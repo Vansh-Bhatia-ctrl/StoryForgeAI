@@ -7,11 +7,11 @@ const sanitizeInput = (text) => {
   return text.trim().replace(/[<>]/g, "").replace(/\s+/g, " ");
 };
 
-const generateNodeId = () => {
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 9);
-  return `node_${timestamp}_${random}`;
-};
+// const generateNodeId = () => {
+//   const timestamp = Date.now();
+//   const random = Math.random().toString(36).substring(2, 9);
+//   return `node_${timestamp}_${random}`;
+// };
 
 const validateTags = (tag) => {
   const tagsArray = tag.split(",").map((t) => t.trim().toLowerCase());
@@ -39,7 +39,11 @@ const validateTags = (tag) => {
 };
 
 const verifyOwnerShip = async (storyId, userId) => {
-  const story = await StoryCards.findOne({ storyId: storyId, user: userId });
+  if (!mongoose.Types.ObjectId.isValid(storyId)) {
+    return { valid: false, message: "Invalid story ID format." };
+  }
+
+  const story = await StoryCards.findOne({ _id: storyId, user: userId });
 
   if (!story) {
     return { valid: false, message: "Story not found or unauthorized access." };
@@ -70,6 +74,7 @@ const createNodesController = async (req, res) => {
     const {
       nodeTitle,
       nodeType,
+      storyId,
       emotionalTone,
       tags,
       storyContent,
@@ -77,7 +82,7 @@ const createNodesController = async (req, res) => {
       position = { x: 0, y: 0 },
     } = req.body;
 
-    const { storyId } = req.params;
+    const { nodeID } = req.params;
 
     const sanitizedTitle = sanitizeInput(nodeTitle);
     const sanitizedContent = sanitizeInput(storyContent);
@@ -223,12 +228,12 @@ const createNodesController = async (req, res) => {
       });
     }
 
-    const nodeId = generateNodeId();
+    // const nodeId = generateNodeId();
 
     const node = new Nodes({
       storyId: story._id,
       user: userId,
-      nodeId,
+      nodeId: nodeID,
       nodeTitle: sanitizedTitle,
       nodeType,
       emotionalTone,
@@ -237,7 +242,7 @@ const createNodesController = async (req, res) => {
       choices:
         nodeType === "Choice"
           ? choices.map((choice, index) => ({
-              choiceId: `choice_${nodeId}_${index}`,
+              choiceId: `choice_${nodeID}_${index}`,
               text: sanitizeInput(choice.text),
               consequence: sanitizeInput(choice.consequence || ""),
               targetNodeId: choice.targetNodeId || "",

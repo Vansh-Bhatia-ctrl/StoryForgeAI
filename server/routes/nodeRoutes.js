@@ -5,7 +5,7 @@ const { deleteNodeController } = require("../controllers/deleteNode");
 const { updateNodeController } = require("../controllers/updateNode");
 const router = express.Router();
 
-router.post("/create/:storyId", verifyAuthentication, createNodesController);
+router.post("/create/:nodeID", verifyAuthentication, createNodesController);
 router.delete("/delete", verifyAuthentication, deleteNodeController);
 router.put("/update/:nodeId", verifyAuthentication, updateNodeController);
 
