@@ -18,23 +18,78 @@ const page = () => {
   console.log("nodeID: ", nodeID, "storyId: ", storyId);
   const [userInput, setUserInput] = useState({
     nodeTitle: "",
-    nodeType: "",
+    nodeType: "Story",
     tags: "",
-    emotionalTone: "",
+    emotionalTone: "Mysterious",
     storyContent: "",
     choices: [],
     positions: { x: 0, y: 0 },
   });
-  const [isLoading, setIssLoading] = useState(true);
-  const { postDataToDb, error, loading, storySaved, operationStatus } =
-    useStoryEditor();
+  const [isLoading, setIsLoading] = useState(true);
+  const [dataFetched, setDataFetched] = useState(false);
+
+  const {
+    postDataToDb,
+    error,
+    loading,
+    storySaved,
+    operationStatus,
+    fetchFromDb,
+    nodeData,
+  } = useStoryEditor();
+  useEffect(() => {
+    const fetchedData = async () => {
+      if (nodeID) {
+        console.log("🔍 Fetching node data for:", nodeID);
+        const result = await fetchFromDb(nodeID);
+        console.log("📥 Fetch result:", result);
+
+        setDataFetched(true);
+
+        if (!result.success && result.message?.includes("not found")) {
+          console.log("ℹ️ No existing data - starting with empty form");
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchedData();
+  }, [nodeID, fetchFromDb]);
+
+  useEffect(() => {
+    if (
+      nodeData &&
+      typeof nodeData === "object" &&
+      Object.keys(nodeData).length > 0
+    ) {
+      console.log("📝 Populating form with node data:", nodeData);
+      setUserInput({
+        nodeTitle: nodeData.nodeTitle || "",
+        nodeType: nodeData.nodeType || "Story",
+        tags: Array.isArray(nodeData.tags)
+          ? nodeData.tags.join(", ")
+          : nodeData.tags || "",
+        emotionalTone: nodeData.emotionalTone || "Mysterious",
+        storyContent: nodeData.storyContent || "",
+        choices: nodeData.choices || [],
+        positions: nodeData.position || { x: 0, y: 0 },
+      });
+
+      setIsLoading(false);
+    } else if (dataFetched && !nodeData) {
+      console.log("ℹ️ Fetch completed - no data found, showing empty form");
+      setIsLoading(false);
+    }
+  }, [nodeData, dataFetched]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      setIssLoading(false);
+      setIsLoading(false);
     }, 3000);
 
     return () => clearTimeout(timer);
   }, []);
+
   const handleUserInput = (e) => {
     const { name, value } = e.target;
     setUserInput((prev) => ({
@@ -67,10 +122,32 @@ const page = () => {
     console.log("📥 Result:", result);
   };
 
-  if (isLoading) {
+  if (isLoading || loading) {
     return (
-      <div className="pt-20 min-h-screen w-screen flex bg-custom-gray-100 items-center justify-center">
-        <Loader2 className="w-16 h-16 text-blue-500 animate-spin mx-auto mb-4" />
+      <div className="pt-20 min-h-screen w-screen flex bg-custom-gray-100 items-center justify-center flex-col gap-4">
+        <Loader2 className="w-16 h-16 text-blue-500 animate-spin" />
+        <p className="text-white">
+          {loading ? "Fetching node data..." : "Loading editor..."}
+        </p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="pt-20 min-h-screen w-screen flex bg-custom-gray-100 items-center justify-center flex-col gap-4">
+        <div className="bg-red-500/20 border border-red-500 rounded-lg p-6 max-w-md">
+          <p className="text-red-400 font-semibold text-lg">
+            Error Loading Node
+          </p>
+          <p className="text-red-300 mt-2">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
@@ -90,7 +167,7 @@ const page = () => {
                     Story Editor
                   </p>
                   <p className="text-slate-400 text-sm lg:text-sm">
-                    ID: node_170934
+                    ID: {nodeID}
                   </p>
                 </div>
               </div>
@@ -145,7 +222,6 @@ const page = () => {
                           onChange={handleUserInput}
                           className="w-full bg-custom-gray-800 border border-slate-700 rounded focus:outline-none focus:border-purple-500 transition-colors px-4 py-2 placeholder:text-slate-600 text-white"
                           placeholder="Enter Title..."
-                          disabled={storySaved}
                         />
                       </div>
                     </div>
@@ -160,7 +236,6 @@ const page = () => {
                         name="nodeType"
                         value={userInput.nodeType}
                         onChange={handleUserInput}
-                        disabled={storySaved}
                         className=" bg-custom-gray-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500 transition-colors text-white w-full"
                       >
                         <option value="Story">Story</option>
@@ -183,7 +258,6 @@ const page = () => {
                           onChange={handleUserInput}
                           className="w-full bg-custom-gray-800 border border-slate-700 rounded focus:outline-none focus:border-purple-500 transition-colors px-4 py-2 placeholder:text-slate-600 text-white"
                           placeholder="Enter Tags..."
-                          disabled={storySaved}
                         />
                       </div>
                     </div>
@@ -198,7 +272,6 @@ const page = () => {
                         name="emotionalTone"
                         value={userInput.emotionalTone}
                         onChange={handleUserInput}
-                        disabled={storySaved}
                         className=" bg-custom-gray-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500 transition-colors text-white w-full"
                       >
                         <option value="Mysterious">Mysterious</option>
@@ -234,7 +307,6 @@ const page = () => {
                       onChange={handleUserInput}
                       className="bg-custom-gray-800 border border-slate-700 rounded focus:outline-none focus:border-purple-500 transition-colors px-4 py-2 placeholder:text-slate-600 text-white w-full resize-y min-h-[200px]"
                       placeholder="Write your story content here..."
-                      disabled={storySaved}
                     />
                   </div>
 
@@ -340,11 +412,16 @@ const page = () => {
 
               <div className="mt-5 flex items-center justify-end">
                 <button
+                  disabled={loading}
                   type="submit"
-                  className="px-4 py-2 rounded-lg transition-all flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+                  className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 text-white ${
+                    loading
+                      ? "bg-emerald-700/50 cursor-not-allowed"
+                      : "bg-emerald-600 hover:bg-emerald-700"
+                  }`}
                 >
                   <Save className="text-white w-4 h-4" />
-                  Save Story
+                  {loading ? "Saving..." : "Save Story"}
                 </button>
               </div>
             </form>

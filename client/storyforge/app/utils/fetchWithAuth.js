@@ -16,6 +16,7 @@ const fetchWithAuth = async (URL, options = {}) => {
   if (config.body && typeof config.body === "object") {
     config.body = JSON.stringify(config.body);
   }
+
   try {
     let response = await fetch(URL, config);
 
@@ -37,12 +38,8 @@ const fetchWithAuth = async (URL, options = {}) => {
           config.headers.Authorization = `Bearer ${newAccessToken}`;
           response = await fetch(URL, config);
 
-          if (!response.ok) {
-            const retryError = await response.json();
-            throw new Error(
-              retryError.message || "Request failed after token refresh"
-            );
-          }
+          const retryData = await response.json();
+          return retryData;
         } catch (refreshError) {
           console.error("❌ Token refresh failed:", refreshError);
 
@@ -63,10 +60,6 @@ const fetchWithAuth = async (URL, options = {}) => {
     }
 
     const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || `HTTP error! status: ${response.status}`);
-    }
 
     return data;
   } catch (error) {
