@@ -10,6 +10,7 @@ const authRoutes = require("./routes/auth");
 const storyCard = require("./routes/storyCard");
 const fetchStoryCard = require("./routes/fetchStoryCards");
 const nodeRoutes = require("./routes/nodeRoutes");
+const fetchNodes = require("./routes/fetchNodes");
 
 const app = express();
 app.use(express.json());
@@ -63,6 +64,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/save-story", storyCard);
 app.use("/api/fetch-story", fetchStoryCard);
 app.use("/api/nodes", nodeRoutes);
+app.use("/api/fetch-nodes", fetchNodes);
 
 app.use((req, res, next) => {
   res.status(404).json({
