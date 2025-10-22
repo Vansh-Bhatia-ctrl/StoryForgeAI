@@ -21,17 +21,21 @@ const fetchNodes = async (req, res) => {
       });
     }
 
-    const { nodeId } = req.params;
+    const { storyId, nodeId } = req.params;
 
-    if (!nodeId) {
+    if (!nodeId || !storyId) {
       return res.status(400).json({
         success: false,
         message: "Node Id is required.",
-        code: "NODEID_NOT_FOUND",
+        code: "IDS_NOT_FOUND",
       });
     }
 
-    const node = await Nodes.findOne({ user: userId, nodeId: nodeId });
+    const node = await Nodes.findOne({
+      user: userId,
+      nodeId: nodeId,
+      storyId: storyId,
+    });
 
     if (!node) {
       return res.status(404).json({

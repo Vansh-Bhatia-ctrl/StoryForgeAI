@@ -3,6 +3,6 @@ const { verifyAuthentication } = require("../middlewares/authmiddleware");
 const { fetchNodes } = require("../controllers/fetchNodes");
 const router = express.Router();
 
-router.get("/:nodeId", verifyAuthentication, fetchNodes);
+router.get("/:storyId/:nodeId", verifyAuthentication, fetchNodes);
 
 module.exports = router;
