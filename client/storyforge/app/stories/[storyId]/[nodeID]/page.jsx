@@ -27,6 +27,7 @@ const page = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [dataFetched, setDataFetched] = useState(false);
+  const [isExistingNode, setIsExistingNode] = useState(false);
 
   const {
     postDataToDb,
@@ -36,25 +37,30 @@ const page = () => {
     operationStatus,
     fetchFromDb,
     nodeData,
+    updateNodeData,
   } = useStoryEditor();
   useEffect(() => {
     const fetchedData = async () => {
       if (nodeID) {
         console.log("🔍 Fetching node data for:", nodeID);
-        const result = await fetchFromDb(nodeID);
+        const result = await fetchFromDb(storyId, nodeID);
         console.log("📥 Fetch result:", result);
 
         setDataFetched(true);
 
         if (!result.success && result.message?.includes("not found")) {
           console.log("ℹ️ No existing data - starting with empty form");
+          setIsExistingNode(false);
           setIsLoading(false);
+        } else if (result.success) {
+          console.log("✅ Found existing node data");
+          setIsExistingNode(true);
         }
       }
     };
 
     fetchedData();
-  }, [nodeID, fetchFromDb]);
+  }, [nodeID, fetchFromDb, storyId]);
 
   useEffect(() => {
     if (
@@ -71,7 +77,15 @@ const page = () => {
           : nodeData.tags || "",
         emotionalTone: nodeData.emotionalTone || "Mysterious",
         storyContent: nodeData.storyContent || "",
-        choices: nodeData.choices || [],
+        choices: Array.isArray(nodeData.choices)
+          ? nodeData.choices.map((choice, index) => ({
+              id: choice.id || Date.now() + index,
+              text: choice.text || "",
+              color: choice.color || "green",
+              consequence: choice.consequence || "",
+              targetNodeId: choice.targetNodeId || "",
+            }))
+          : [],
         positions: nodeData.position || { x: 0, y: 0 },
       });
 
@@ -98,28 +112,90 @@ const page = () => {
     }));
   };
 
+  const handleAddChoice = () => {
+    const newChoice = {
+      id: Date.now(),
+      text: "",
+      color: "green",
+      consequence: "",
+      targetNodeId: "",
+    };
+
+    setUserInput((prev) => ({
+      ...prev,
+      choices: [...prev.choices, newChoice],
+    }));
+  };
+
+  const handleChoiceChange = (choiceId, field, value) => {
+    setUserInput((prev) => ({
+      ...prev,
+      choices: prev.choices.map((choice) =>
+        choice.id === choiceId ? { ...choice, [field]: value } : choice
+      ),
+    }));
+  };
+
+  const handleRemoveChoice = (choiceId) => {
+    setUserInput((prev) => ({
+      ...prev,
+      choices: prev.choices.filter((choice) => choice.id !== choiceId),
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     console.log("📤 Submitting data:", {
       nodeID,
       storyId,
+      isExistingNode,
       ...userInput,
     });
 
-    const result = await postDataToDb(
-      nodeID,
-      storyId,
-      userInput.nodeTitle,
-      userInput.nodeType,
-      userInput.emotionalTone,
-      userInput.tags,
-      userInput.storyContent,
-      userInput.choices,
-      userInput.positions
-    );
+    let result;
+
+    if (isExistingNode && nodeData) {
+      console.log("🔄 Updating existing node...");
+      const updatedData = {
+        nodeTitle: userInput.nodeTitle,
+        nodeType: userInput.nodeType,
+        emotionalTone: userInput.emotionalTone,
+        tags: userInput.tags,
+        storyContent: userInput.storyContent,
+        choices: userInput.choices.map(({ id, ...choice }) => choice),
+        position: userInput.positions,
+      };
+
+      result = await updateNodeData(nodeID, storyId, updatedData);
+    } else {
+      console.log("➕ Creating new node...");
+      result = await postDataToDb(
+        nodeID,
+        storyId,
+        userInput.nodeTitle,
+        userInput.nodeType,
+        userInput.emotionalTone,
+        userInput.tags,
+        userInput.storyContent,
+        userInput.choices.map(({ id, ...choice }) => choice),
+        userInput.positions
+      );
+
+      if (result.success) {
+        setIsExistingNode(true);
+      }
+    }
 
     console.log("📥 Result:", result);
+
+    if (result.success) {
+      console.log("✅ Save successful!");
+      alert("Data saved successfully.");
+    } else {
+      console.error("❌ Save failed:", result.message);
+      alert("Failed to save data.");
+    }
   };
 
   if (isLoading || loading) {
@@ -333,78 +409,146 @@ const page = () => {
                         </p>
                       </div>
                       <div>
-                        <button className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-all flex items-center gap-2 text-sm text-white">
+                        <button
+                          type="button"
+                          onClick={handleAddChoice}
+                          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-all flex items-center gap-2 text-sm text-white"
+                        >
                           + Add Choice
                         </button>
                       </div>
                     </div>
 
-                    <div className="mt-3">
-                      <div className="bg-emerald-500/20 border-emerald-500 text-emerald-300 p-4 rounded border-2">
-                        <div className="grid grid-cols-2  gap-4">
-                          <div>
-                            <div className="mb-2">
-                              <label className="text-slate-400 text-sm">
-                                Choice Text
-                              </label>
-                            </div>
-                            <div>
-                              <input
-                                name="choices"
-                                value={userInput.choices}
-                                onChange={handleUserInput}
-                                className="w-full bg-custom-gray-800 border border-slate-700 rounded focus:outline-none focus:border-purple-500 transition-colors px-4 py-2 placeholder:text-green-700 placeholder:font-semibold text-white"
-                                placeholder="Enter Text..."
-                              />
-                            </div>
-                          </div>
-
-                          <div>
-                            <div className="mb-2">
-                              <label className="text-slate-400 text-sm">
-                                Color
-                              </label>
-                            </div>
-                            <select className=" bg-custom-gray-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500 transition-colors text-green-700 font-semibold w-full">
-                              <option value="green">Green</option>
-                              <option value="red">Red</option>
-                              <option value="blue">Blue</option>
-                              <option value="purple">Purple</option>
-                              <option value="yellow">Yellow</option>
-                            </select>
-                          </div>
+                    <div className="mt-3 space-y-4">
+                      {userInput.choices.length === 0 ? (
+                        <div className="text-center py-8 text-slate-400">
+                          <p>
+                            No choices added yet. Click "+ Add Choice" to create
+                            one.
+                          </p>
                         </div>
-
-                        <div className="grid grid-cols-2  gap-4">
-                          <div>
-                            <div className="mb-2">
-                              <label className="text-slate-400 text-sm">
-                                Consequences
-                              </label>
+                      ) : (
+                        userInput.choices.map((choice, index) => (
+                          <div
+                            key={choice.id}
+                            className={`bg-${choice.color}-500/20 ${
+                              choice.color
+                                ? `border-${choice.color}-500`
+                                : "border-slate-400"
+                            } text-${
+                              choice.color
+                            }-300 p-4 rounded border-2 relative`}
+                          >
+                            <div className="absolute -top-3 -left-3 bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">
+                              {index + 1}
                             </div>
-                            <div>
-                              <input
-                                className="w-full bg-custom-gray-800 border border-slate-700 rounded focus:outline-none focus:border-purple-500 transition-colors px-4 py-2 placeholder:text-green-700 placeholder:font-semibold text-white"
-                                placeholder="Brief Description..."
-                              />
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveChoice(choice.id)}
+                              className="absolute -top-3 -right-3 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg"
+                            >
+                              ×
+                            </button>
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <div className="mb-2">
+                                  <label className="text-slate-400 text-sm">
+                                    Choice Text
+                                  </label>
+                                </div>
+                                <div>
+                                  <input
+                                    value={choice.text}
+                                    onChange={(e) =>
+                                      handleChoiceChange(
+                                        choice.id,
+                                        "text",
+                                        e.target.value
+                                      )
+                                    }
+                                    className={`w-full bg-custom-gray-800 border border-slate-700 rounded focus:outline-none focus:border-purple-500 transition-colors px-4 py-2 placeholder:text-${choice.color}-700 placeholder:font-semibold text-white`}
+                                    placeholder="Enter Text..."
+                                  />
+                                </div>
+                              </div>
+
+                              <div>
+                                <div className="mb-2">
+                                  <label className="text-slate-400 text-sm">
+                                    Color
+                                  </label>
+                                </div>
+                                <select
+                                  value={choice.color}
+                                  onChange={(e) =>
+                                    handleChoiceChange(
+                                      choice.id,
+                                      "color",
+                                      e.target.value
+                                    )
+                                  }
+                                  className={`bg-custom-gray-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500 transition-colors text-${choice.color}-700 font-semibold w-full`}
+                                >
+                                  <option value="green">Green</option>
+                                  <option value="red">Red</option>
+                                  <option value="blue">Blue</option>
+                                  <option value="purple">Purple</option>
+                                  <option value="yellow">Yellow</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            {/* Consequences and Target NodeID */}
+                            <div className="grid grid-cols-2 gap-4 mt-4">
+                              <div>
+                                <div className="mb-2">
+                                  <label className="text-slate-400 text-sm">
+                                    Consequences
+                                  </label>
+                                </div>
+                                <div>
+                                  <input
+                                    value={choice.consequence}
+                                    onChange={(e) =>
+                                      handleChoiceChange(
+                                        choice.id,
+                                        "consequence",
+                                        e.target.value
+                                      )
+                                    }
+                                    className={`w-full bg-custom-gray-800 border border-slate-700 rounded focus:outline-none focus:border-purple-500 transition-colors px-4 py-2 placeholder:text-${choice.color}-700 placeholder:font-semibold text-white`}
+                                    placeholder="Brief Description..."
+                                  />
+                                </div>
+                              </div>
+
+                              <div>
+                                <div className="mb-2">
+                                  <label className="text-slate-400 text-sm">
+                                    Target NodeID
+                                  </label>
+                                </div>
+                                <div>
+                                  <input
+                                    value={choice.targetNodeId}
+                                    onChange={(e) =>
+                                      handleChoiceChange(
+                                        choice.id,
+                                        "targetNodeId",
+                                        e.target.value
+                                      )
+                                    }
+                                    className={`w-full bg-custom-gray-800 border border-slate-700 rounded focus:outline-none focus:border-purple-500 transition-colors px-4 py-2 placeholder:text-${choice.color}-700 placeholder:font-semibold text-white`}
+                                    placeholder="Enter NodeID..."
+                                  />
+                                </div>
+                              </div>
                             </div>
                           </div>
-
-                          <div>
-                            <div className="mb-2">
-                              <label className="text-slate-400 text-sm">
-                                Target NodeID
-                              </label>
-                            </div>
-                            <div>
-                              <input
-                                className="w-full bg-custom-gray-800 border border-slate-700 rounded focus:outline-none focus:border-purple-500 transition-colors px-4 py-2 placeholder:text-green-700 placeholder:font-semibold text-white"
-                                placeholder="Enter NodeID..."
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                        ))
+                      )}
                     </div>
                   </div>
                 </div>
@@ -421,13 +565,44 @@ const page = () => {
                   }`}
                 >
                   <Save className="text-white w-4 h-4" />
-                  {loading ? "Saving..." : "Save Story"}
+                  {loading
+                    ? operationStatus === "updating"
+                      ? "Updating..."
+                      : "Saving"
+                    : isExistingNode
+                    ? "Save Story"
+                    : "Update Story "}
                 </button>
               </div>
             </form>
           </div>
         </div>
       </div>
+
+      {storySaved && (
+        <div className="fixed bottom-4 left-4 bg-emerald-500 text-white px-6 py-3 rounded-lg shadow-lg z-50">
+          <div className="flex items-center gap-2">
+            <Save className="w-5 h-5" />
+            <span className="font-semibold">
+              {isExistingNode
+                ? "Node updated successfully!"
+                : "Node created successfully!"}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {error && !loading && !storySaved && (
+        <div className="fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 max-w-md">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">❌</span>
+            <div>
+              <p className="font-semibold">Failed to save node</p>
+              <p className="text-sm">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

@@ -115,7 +115,7 @@ const useStoryEditor = create((set, get) => ({
     set({ error: null, validationErrors: {} });
   },
 
-  fetchFromDb: async (nodeId) => {
+  fetchFromDb: async (storyId, nodeId) => {
     get().clearError();
     set({
       loading: true,
@@ -132,7 +132,7 @@ const useStoryEditor = create((set, get) => ({
       set({ operationStatus: "fetching" });
 
       const response = await get().makeRequestWithRetry(
-        `${process.env.NEXT_PUBLIC_BACKEND_DEV_URL}/api/fetch-nodes/${nodeId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_DEV_URL}/api/fetch-nodes/${storyId}/${nodeId}`,
         {
           method: "GET",
         },
@@ -302,6 +302,139 @@ const useStoryEditor = create((set, get) => ({
       }
     } catch (error) {
       console.error("❌ Error saving node:", error.message);
+
+      const errorMessage = get().parseErrorMessage(error);
+
+      set({
+        loading: false,
+        storySaved: false,
+        error: errorMessage,
+        operationStatus: "error",
+      });
+
+      return {
+        success: false,
+        message: errorMessage,
+        error: error,
+      };
+    }
+  },
+
+  updateNodeData: async (nodeId, storyId, updatedData = {}) => {
+    get().clearError();
+    set({ loading: true, storySaved: false, operationStatus: "validating" });
+
+    try {
+      if (!storyId || !nodeId) {
+        throw new Error("Node ID and Story ID are required");
+      }
+
+      const nodeData = {};
+
+      if (updatedData.nodeTitle !== undefined) {
+        nodeData.nodeTitle = updatedData.nodeTitle;
+      }
+
+      if (updatedData.nodeType !== undefined) {
+        nodeData.nodeType = updatedData.nodeType;
+      }
+
+      if (updatedData.emotionalTone !== undefined) {
+        nodeData.emotionalTone = updatedData.emotionalTone;
+      }
+
+      if (updatedData.tags !== undefined) {
+        nodeData.tags = updatedData.tags;
+      }
+
+      if (updatedData.storyContent !== undefined) {
+        nodeData.storyContent = updatedData.storyContent;
+      }
+
+      if (updatedData.choices !== undefined) {
+        nodeData.choices = updatedData.choices;
+      }
+
+      const validation = get().validateNodeData(nodeData, true);
+
+      if (!validation.isValid) {
+        set({
+          loading: false,
+          validationErrors: validation.errors,
+          error: "Please fix the validation errors before updating",
+          operationStatus: "error",
+        });
+
+        return {
+          success: false,
+          message: "Validation failed",
+          errors: validation.errors,
+        };
+      }
+
+      const sanitizedData = {
+        storyId: storyId,
+      };
+
+      if (nodeData.nodeTitle !== undefined) {
+        sanitizedData.nodeTitle = get().sanitizeInput(nodeData.nodeTitle);
+      }
+
+      if (nodeData.nodeType !== undefined) {
+        sanitizedData.nodeType = nodeData.nodeType;
+      }
+
+      if (nodeData.emotionalTone !== undefined) {
+        sanitizedData.emotionalTone = nodeData.emotionalTone;
+      }
+
+      if (nodeData.tags !== undefined) {
+        sanitizedData.tags = nodeData.tags;
+      }
+
+      if (nodeData.storyContent !== undefined) {
+        sanitizedData.storyContent = get().sanitizeInput(nodeData.storyContent);
+      }
+
+      if (nodeData.choices !== undefined && nodeData.nodeType === "Choice") {
+        sanitizedData.choices = nodeData.choices.map((choice) => ({
+          ...choice,
+          text: get().sanitizeInput(choice.text),
+          consequence: get().sanitizeInput(choice.consequence || ""),
+        }));
+      }
+
+      if (updatedData.position !== undefined) {
+        sanitizedData.position = updatedData.position;
+      }
+
+      set({ operationStatus: "updating" });
+      const response = await get().makeRequestWithRetry(
+        `${process.env.NEXT_PUBLIC_BACKEND_DEV_URL}/api/nodes/update/${nodeId}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(sanitizedData),
+        },
+        2
+      );
+
+      if (response.success) {
+        set({
+          loading: false,
+          error: null,
+          storySaved: true,
+          operationStatus: "updated",
+          lastSavedNode: response.data.node,
+          validationErrors: {},
+        });
+
+        console.log("✅ Node updated successfully:", response.data.node.nodeId);
+        return response;
+      } else {
+        throw new Error(response.message || "Failed to update node");
+      }
+    } catch (error) {
+      console.error("❌ Error updating node:", error.message);
 
       const errorMessage = get().parseErrorMessage(error);
 
