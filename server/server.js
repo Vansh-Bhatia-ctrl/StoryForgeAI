@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const http = require("http");
+const { WebSocketServer } = require("ws");
 
 dotenv.config();
 
@@ -12,7 +14,14 @@ const fetchStoryCard = require("./routes/fetchStoryCards");
 const nodeRoutes = require("./routes/nodeRoutes");
 const fetchNodes = require("./routes/fetchNodes");
 
+const ollamaService = require("./services/ollamaService");
+
 const app = express();
+const server = http.createServer(app);
+
+// WebSocket Server Setup
+const wss = new WebSocketServer({ server });
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -40,6 +49,18 @@ mongoose
     process.exit(1);
   });
 
+// Check Ollama health on startup
+(async () => {
+  const isHealthy = await ollamaService.checkHealth();
+  if (isHealthy) {
+    console.log("✅ Ollama service is ready");
+  } else {
+    console.warn(
+      "⚠️ Ollama service not available - AI features will be limited"
+    );
+  }
+})();
+
 app.get("/", (req, res) => {
   res.json({
     success: true,
@@ -59,7 +80,7 @@ app.get("/health", (req, res) => {
   res.status(200).json(healthCheck);
 });
 
-// API Routes (we'll add these next)
+// API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/save-story", storyCard);
 app.use("/api/fetch-story", fetchStoryCard);
@@ -85,22 +106,29 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log("================================================");
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV || "development"}`);
   console.log(`🌐 API URL: http://localhost:${PORT}`);
+  console.log(`🔌 WebSocket URL: ws://localhost:${PORT}`);
   console.log("================================================");
 });
 
 process.on("SIGTERM", () => {
   console.log("👋 SIGTERM signal received: closing HTTP server");
-  mongoose.connection.close();
-  process.exit(0);
+  server.close(() => {
+    mongoose.connection.close();
+    wss.close();
+    process.exit(0);
+  });
 });
 
 process.on("SIGINT", () => {
   console.log("👋 SIGINT signal received: closing HTTP server");
-  mongoose.connection.close();
-  process.exit(0);
+  server.close(() => {
+    mongoose.connection.close();
+    wss.close();
+    process.exit(0);
+  });
 });
