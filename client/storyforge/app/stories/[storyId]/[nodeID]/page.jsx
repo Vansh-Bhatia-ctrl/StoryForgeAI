@@ -1,4 +1,5 @@
 "use client";
+import useAutoComplete from "@/app/store/useAutoComplete";
 import useStoryEditor from "@/app/store/useStoryEditor";
 import {
   Calendar,
@@ -9,13 +10,15 @@ import {
   Save,
   Sparkles,
   Tag,
+  Wand2,
+  Check,
+  X,
 } from "lucide-react";
 import { useParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 const page = () => {
   const { storyId, nodeID } = useParams();
-  console.log("nodeID: ", nodeID, "storyId: ", storyId);
   const [userInput, setUserInput] = useState({
     nodeTitle: "",
     nodeType: "Story",
@@ -25,6 +28,9 @@ const page = () => {
     choices: [],
     positions: { x: 0, y: 0 },
   });
+
+  const textareaRef = useRef(null);
+
   const [isLoading, setIsLoading] = useState(true);
   const [dataFetched, setDataFetched] = useState(false);
   const [isExistingNode, setIsExistingNode] = useState(false);
@@ -39,6 +45,16 @@ const page = () => {
     nodeData,
     updateNodeData,
   } = useStoryEditor();
+  const {
+    initializeSocket,
+    debouncedAutoComplete,
+    acceptSuggestion,
+    rejectSuggestion,
+    currentSuggestion,
+    isGenerating,
+    error: autoCompleteError,
+    cleanup,
+  } = useAutoComplete();
   useEffect(() => {
     const fetchedData = async () => {
       if (nodeID) {
@@ -103,6 +119,49 @@ const page = () => {
 
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    console.log("🔌 Initializing Socket.IO for auto-completion");
+    initializeSocket();
+
+    return () => {
+      console.log("🧹 Cleaning up socket connection");
+      cleanup();
+    };
+  }, [initializeSocket, cleanup]);
+
+  const handleStoryContentChange = (e) => {
+    const newContent = e.target.value;
+
+    setUserInput((prev) => ({
+      ...prev,
+      storyContent: newContent,
+    }));
+
+    debouncedAutoComplete(newContent, {
+      nodeType: userInput.nodeType,
+      emotionalTone: userInput.emotionalTone,
+      tags: userInput.tags,
+    });
+  };
+
+  const handleAcceptSuggestion = () => {
+    const acceptedText = acceptSuggestion();
+
+    setUserInput((prev) => ({
+      ...prev,
+      storyContent:
+        prev.storyContent +
+        (prev.storyContent.endsWith(" ") || prev.storyContent.endsWith("\n")
+          ? ""
+          : " ") +
+        acceptedText,
+    }));
+
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  };
 
   const handleUserInput = (e) => {
     const { name, value } = e.target;
@@ -249,7 +308,7 @@ const page = () => {
               </div>
 
               <div>
-                <button className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-all flex items-ce gap-2">
+                <button className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-all flex items-center gap-2">
                   <Sparkles className="text-white" />
                   <p className="text-white font-semibold">AI Assist</p>
                 </button>
@@ -284,7 +343,7 @@ const page = () => {
                 </div>
 
                 <div className="mt-3">
-                  <div className="grid grid-cols-2  gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <div className="mb-2">
                         <label className="text-slate-400 text-sm">
@@ -312,7 +371,7 @@ const page = () => {
                         name="nodeType"
                         value={userInput.nodeType}
                         onChange={handleUserInput}
-                        className=" bg-custom-gray-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500 transition-colors text-white w-full"
+                        className="bg-custom-gray-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500 transition-colors text-white w-full"
                       >
                         <option value="Story">Story</option>
                         <option value="Choice">Choice</option>
@@ -348,7 +407,7 @@ const page = () => {
                         name="emotionalTone"
                         value={userInput.emotionalTone}
                         onChange={handleUserInput}
-                        className=" bg-custom-gray-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500 transition-colors text-white w-full"
+                        className="bg-custom-gray-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500 transition-colors text-white w-full"
                       >
                         <option value="Mysterious">Mysterious</option>
                         <option value="Tense">Tense</option>
@@ -362,28 +421,92 @@ const page = () => {
                 </div>
               </div>
 
+              {/* ✅ Updated Story Content Section */}
               <div className="mt-5">
                 <div className="bg-custom-gray-700 p-4 rounded border border-slate-800">
-                  <div>
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div>
-                        <MessageSquare className="w-4 h-4 text-purple-500 lg:w-6 lg:h-6" />
-                      </div>
-                      <div>
-                        <p className="text-white font-semibold text-lg">
-                          Story Content
-                        </p>
-                      </div>
+                      <MessageSquare className="w-4 h-4 text-purple-500 lg:w-6 lg:h-6" />
+                      <p className="text-white font-semibold text-lg">
+                        Story Content
+                      </p>
                     </div>
+
+                    {/* ✅ AI Status Indicator */}
+                    {isGenerating && (
+                      <div className="flex items-center gap-2 text-purple-400">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span className="text-sm">AI is writing...</span>
+                      </div>
+                    )}
                   </div>
-                  <div className="mt-3">
+
+                  <div className="mt-3 relative">
                     <textarea
+                      ref={textareaRef}
                       name="storyContent"
                       value={userInput.storyContent}
-                      onChange={handleUserInput}
+                      onChange={handleStoryContentChange}
                       className="bg-custom-gray-800 border border-slate-700 rounded focus:outline-none focus:border-purple-500 transition-colors px-4 py-2 placeholder:text-slate-600 text-white w-full resize-y min-h-[200px]"
-                      placeholder="Write your story content here..."
+                      placeholder="Write your story content here... (AI will suggest continuations as you type)"
                     />
+
+                    {/* ✅ Streaming AI Suggestion Display */}
+                    {currentSuggestion && (
+                      <div className="mt-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2 text-purple-400 text-sm">
+                            <Wand2 className="w-4 h-4" />
+                            <span className="font-semibold">
+                              {isGenerating
+                                ? "AI is writing..."
+                                : "AI Suggestion:"}
+                            </span>
+                          </div>
+
+                          {!isGenerating && (
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={handleAcceptSuggestion}
+                                className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 rounded text-white text-sm flex items-center gap-1 transition-colors"
+                                title="Accept suggestion"
+                              >
+                                <Check className="w-4 h-4" />
+                                Accept
+                              </button>
+                              <button
+                                type="button"
+                                onClick={rejectSuggestion}
+                                className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-white text-sm flex items-center gap-1 transition-colors"
+                                title="Reject"
+                              >
+                                <X className="w-4 h-4" />
+                                Reject
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3">
+                          <p className="text-slate-300 text-sm whitespace-pre-wrap">
+                            {currentSuggestion}
+                            {isGenerating && (
+                              <span className="inline-block w-2 h-4 bg-purple-500 ml-1 animate-pulse" />
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ✅ Auto-Complete Error Display */}
+                    {autoCompleteError && (
+                      <div className="mt-2 bg-red-500/10 border border-red-500/30 rounded px-3 py-2">
+                        <p className="text-red-400 text-sm">
+                          {autoCompleteError}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="mt-3 flex items-center gap-2">
@@ -399,6 +522,7 @@ const page = () => {
                 </div>
               </div>
 
+              {/* Rest of your existing code (choices section, etc.) */}
               {userInput.nodeType === "Choice" && (
                 <div className="mt-5">
                   <div className="bg-custom-gray-700 p-4 rounded border border-slate-800">
@@ -431,13 +555,7 @@ const page = () => {
                         userInput.choices.map((choice, index) => (
                           <div
                             key={choice.id}
-                            className={`bg-${choice.color}-500/20 ${
-                              choice.color
-                                ? `border-${choice.color}-500`
-                                : "border-slate-400"
-                            } text-${
-                              choice.color
-                            }-300 p-4 rounded border-2 relative`}
+                            className={`bg-${choice.color}-500/20 border-2 border-${choice.color}-500 text-${choice.color}-300 p-4 rounded relative`}
                           >
                             <div className="absolute -top-3 -left-3 bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">
                               {index + 1}
@@ -468,7 +586,7 @@ const page = () => {
                                         e.target.value
                                       )
                                     }
-                                    className={`w-full bg-custom-gray-800 border border-slate-700 rounded focus:outline-none focus:border-purple-500 transition-colors px-4 py-2 placeholder:text-${choice.color}-700 placeholder:font-semibold text-white`}
+                                    className="w-full bg-custom-gray-800 border border-slate-700 rounded focus:outline-none focus:border-purple-500 transition-colors px-4 py-2 placeholder:text-slate-600 text-white"
                                     placeholder="Enter Text..."
                                   />
                                 </div>
@@ -489,7 +607,7 @@ const page = () => {
                                       e.target.value
                                     )
                                   }
-                                  className={`bg-custom-gray-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500 transition-colors text-${choice.color}-700 font-semibold w-full`}
+                                  className="bg-custom-gray-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500 transition-colors text-white w-full"
                                 >
                                   <option value="green">Green</option>
                                   <option value="red">Red</option>
@@ -500,7 +618,6 @@ const page = () => {
                               </div>
                             </div>
 
-                            {/* Consequences and Target NodeID */}
                             <div className="grid grid-cols-2 gap-4 mt-4">
                               <div>
                                 <div className="mb-2">
@@ -518,7 +635,7 @@ const page = () => {
                                         e.target.value
                                       )
                                     }
-                                    className={`w-full bg-custom-gray-800 border border-slate-700 rounded focus:outline-none focus:border-purple-500 transition-colors px-4 py-2 placeholder:text-${choice.color}-700 placeholder:font-semibold text-white`}
+                                    className="w-full bg-custom-gray-800 border border-slate-700 rounded focus:outline-none focus:border-purple-500 transition-colors px-4 py-2 placeholder:text-slate-600 text-white"
                                     placeholder="Brief Description..."
                                   />
                                 </div>
@@ -540,7 +657,7 @@ const page = () => {
                                         e.target.value
                                       )
                                     }
-                                    className={`w-full bg-custom-gray-800 border border-slate-700 rounded focus:outline-none focus:border-purple-500 transition-colors px-4 py-2 placeholder:text-${choice.color}-700 placeholder:font-semibold text-white`}
+                                    className="w-full bg-custom-gray-800 border border-slate-700 rounded focus:outline-none focus:border-purple-500 transition-colors px-4 py-2 placeholder:text-slate-600 text-white"
                                     placeholder="Enter NodeID..."
                                   />
                                 </div>
@@ -568,10 +685,10 @@ const page = () => {
                   {loading
                     ? operationStatus === "updating"
                       ? "Updating..."
-                      : "Saving"
+                      : "Saving..."
                     : isExistingNode
-                    ? "Save Story"
-                    : "Update Story "}
+                    ? "Update Story"
+                    : "Save Story"}
                 </button>
               </div>
             </form>
