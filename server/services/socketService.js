@@ -31,11 +31,11 @@ const initializeSocket = (socketIo) => {
     });
 
     socket.on("stream_dialogue", async (data) => {
-      await handleStreamDialogue(clientId, data.socket);
+      await handleStreamDialogue(clientId, data, socket);
     });
 
     socket.on("ping", () => {
-      socket.emit("pong", { timestamp: new Date.now() });
+      socket.emit("pong", { timestamp: Date.now() });
     });
 
     socket.on("disconnect", (reason) => {
@@ -160,7 +160,7 @@ Continue the story:`;
     let totalChunks = 0;
 
     await ollamaService.streamCompletion(
-      prompt,
+      systemPrompt,
       (chunk) => {
         totalChunks++;
         socket.emit("stream_chunk", {

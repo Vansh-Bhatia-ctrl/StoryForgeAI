@@ -133,16 +133,11 @@ Format: Return only the dialogue lines, one per line, without numbering.`;
         throw new Error(`Ollama streaming error: ${response.status}`);
       }
 
-      const reader = await response.body.getReader();
-      const decoder = new TextDecoder();
-
-      while (true) {
-        const { done, value } = await reader.read();
-
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n").filter((line) => line.trim());
+      response.body.on("data", (chunk) => {
+        const lines = chunk
+          .toString()
+          .split("\n")
+          .filter((line) => line.trim());
 
         for (const line of lines) {
           try {
@@ -150,14 +145,16 @@ Format: Return only the dialogue lines, one per line, without numbering.`;
             if (json.response) {
               onChunk(json.response);
             }
-            if (json.done) {
-              return;
-            }
           } catch (e) {
             continue;
           }
         }
-      }
+      });
+
+      await new Promise((resolve, reject) => {
+        response.body.on("end", resolve);
+        response.body.on("error", reject);
+      });
     } catch (error) {
       console.error("❌ Stream error:", error.message);
       throw error;

@@ -4,7 +4,7 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const http = require("http");
-const { WebSocketServer } = require("ws");
+const { Server } = require("socket.io");
 
 dotenv.config();
 
@@ -15,12 +15,23 @@ const nodeRoutes = require("./routes/nodeRoutes");
 const fetchNodes = require("./routes/fetchNodes");
 
 const ollamaService = require("./services/ollamaService");
+const {
+  initializeSocket,
+  getClientCount,
+} = require("./services/socketService");
 
 const app = express();
 const server = http.createServer(app);
 
-// WebSocket Server Setup
-const wss = new WebSocketServer({ server });
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
+initializeSocket(io);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -49,7 +60,6 @@ mongoose
     process.exit(1);
   });
 
-// Check Ollama health on startup
 (async () => {
   const isHealthy = await ollamaService.checkHealth();
   if (isHealthy) {
@@ -66,6 +76,7 @@ app.get("/", (req, res) => {
     success: true,
     message: "🚀 StoryForge AI API is running!",
     timestamp: new Date().toISOString(),
+    socketClients: getClientCount(),
   });
 });
 
@@ -76,6 +87,7 @@ app.get("/health", (req, res) => {
     timestamp: Date.now(),
     database:
       mongoose.connection.readyState === 1 ? "Connected" : "Disconnected",
+    socketClients: getClientCount(),
   };
   res.status(200).json(healthCheck);
 });
@@ -111,7 +123,8 @@ server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV || "development"}`);
   console.log(`🌐 API URL: http://localhost:${PORT}`);
-  console.log(`🔌 WebSocket URL: ws://localhost:${PORT}`);
+  console.log(`🔌 Socket.IO URL: http://localhost:${PORT}`);
+  console.log(`👥 Connected clients: ${getClientCount()}`);
   console.log("================================================");
 });
 
@@ -119,7 +132,7 @@ process.on("SIGTERM", () => {
   console.log("👋 SIGTERM signal received: closing HTTP server");
   server.close(() => {
     mongoose.connection.close();
-    wss.close();
+    io.close();
     process.exit(0);
   });
 });
@@ -128,7 +141,7 @@ process.on("SIGINT", () => {
   console.log("👋 SIGINT signal received: closing HTTP server");
   server.close(() => {
     mongoose.connection.close();
-    wss.close();
+    io.close();
     process.exit(0);
   });
 });
