@@ -160,6 +160,50 @@ Format: Return only the dialogue lines, one per line, without numbering.`;
       throw error;
     }
   }
+
+//   async characterCompletion(context = {}) {
+//     const {
+//       maxTokens = 80,
+//       characterName = "Unknown Character",
+//       backstory = "A mysterious figure with an unclear past.",
+//       personality = "neutral and balanced",
+//       traits = [],
+//       scenarioContext = "",
+//       currentDialogue = "",
+//     } = context;
+
+//     const traitsText =
+//       traits.length > 0 ? traits.join(", ") : "balanced, thoughtful";
+//     const prompt = `You are ${characterName}. This is who you are:
+
+// BACKSTORY:
+// ${backstory}
+
+// PERSONALITY:
+// You have a ${personality} personality.
+
+// CHARACTER TRAITS:
+// ${traitsText}
+
+// CURRENT SITUATION:
+// ${scenarioContext || "You are in a conversation."}
+
+// ${currentDialogue ? `RECENT DIALOGUE:\n${currentDialogue}\n` : ""}
+
+// INSTRUCTIONS:
+// - Respond as ${characterName} would, staying true to your backstory and personality
+// - Your response should reflect your traits: ${traitsText}
+// - Keep your response natural and conversational (2-4 sentences)
+// - Do not break character or refer to yourself in third person
+// - Embody the emotional state that matches your personality
+
+// Respond as ${characterName}:`;
+
+//     await this.generateCompletion(prompt, {
+//       maxTokens,
+//       temperature: 0.8,
+//     });
+//   }
 }
 
 module.exports = new OllamaService();

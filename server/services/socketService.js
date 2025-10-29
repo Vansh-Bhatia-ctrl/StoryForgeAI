@@ -266,6 +266,14 @@ Write natural, engaging dialogue that fits the character's personality.`;
   }
 };
 
+// const customAiCharacter = async (data, socket) => {
+//   const { characterName, backstory, personality, traits } = data;
+
+//   if(!characterName){
+//     socket.emit("character_error")
+//   }
+// };
+
 const broadcast = (event, data) => {
   if (io) {
     io.emit(event, data);
