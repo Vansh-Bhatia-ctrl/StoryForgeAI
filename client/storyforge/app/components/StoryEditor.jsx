@@ -2,6 +2,7 @@
 import { GitBranch, User, Users, MessageSquare } from "lucide-react";
 import React, { useState } from "react";
 import Flow from "./Flow";
+import CharacterStudio from "./CharacterStudio";
 
 const OPTIONS = [
   {
@@ -54,6 +55,12 @@ const StoryEditorNavbar = ({ storyId }) => {
       {selectedOption === 1 && (
         <div>
           <Flow storyId={storyId} />
+        </div>
+      )}
+
+      {selectedOption === 3 && (
+        <div>
+          <CharacterStudio />
         </div>
       )}
     </>

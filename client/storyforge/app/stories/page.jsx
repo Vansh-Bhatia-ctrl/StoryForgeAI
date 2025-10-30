@@ -185,7 +185,7 @@ const page = () => {
                         <div className="p-5">
                           <X
                             onClick={() => setModalIsOpen(false)}
-                            className="text-slate-500 hover:text-slate-400"
+                            className="text-slate-500 hover:text-slate-400 cursor-pointer"
                           />
                         </div>
                       </div>
