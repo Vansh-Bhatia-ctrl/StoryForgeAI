@@ -117,7 +117,8 @@ const createCharacter = async (req, res) => {
       });
     }
 
-    const { characterName, backstory, personality, traits, storyId } = req.body;
+    const { characterName, backstory, personality, traits } = req.body;
+    const { storyId } = req.params;
 
     const storyCheck = await verifyOwnerShip(storyId, userId);
     if (!storyCheck.valid) {
