@@ -60,7 +60,7 @@ const StoryEditorNavbar = ({ storyId }) => {
 
       {selectedOption === 3 && (
         <div>
-          <CharacterStudio />
+          <CharacterStudio storyId={storyId} />
         </div>
       )}
     </>

@@ -6,10 +6,21 @@ const useCharacter = create((set, get) => ({
   loading: false,
   characterSaved: false,
   savedDataMessage: null,
+  receivedData: [],
 
   sanitizeInput: (text) => {
     if (!text || typeof text !== "string") return text;
     return text.trim().replace(/[<>]/g, "").replace(/\s+/g, " ");
+  },
+
+  sanitizeReceivedData: (characterData) => {
+    return {
+      ...characterData,
+      characterName: get().sanitizeInput(characterData.characterName),
+      backstory: get().sanitizeInput(characterData.backstory),
+      personality: characterData.personality,
+      traits: characterData.traits,
+    };
   },
 
   validatePersonality: (personality, errors = {}) => {
@@ -86,9 +97,9 @@ const useCharacter = create((set, get) => ({
       errors.backstory = "Backstory must be between 30 and 200 characters.";
     }
 
-    const validatedPersonality = get().validatePersonality(personality, errors);
+    get().validatePersonality(personality, errors);
 
-    const validatedTraits = get().validateTraits(traits, errors);
+    get().validateTraits(traits, errors);
 
     if (!storyId || typeof storyId !== "string") {
       errors.storyId = "Story ID is required.";
@@ -100,11 +111,42 @@ const useCharacter = create((set, get) => ({
       sanitizedData: {
         characterName: sanitizedCharacterName,
         backstory: sanitizedBackstory,
-        personality: validatedPersonality,
-        traits: validatedTraits,
+        personality: personality,
+        traits: traits,
         storyId,
       },
     };
+  },
+
+  validateReceivedData: (characterData) => {
+    if (!characterData || typeof characterData !== "object") {
+      return {
+        isValid: false,
+        error: "Incorrect character data format.",
+      };
+    }
+
+    const requiredFields = [
+      "characterName",
+      "backstory",
+      "personality",
+      "traits",
+    ];
+
+    for (const field of requiredFields) {
+      if (!characterData[field]) {
+        console.warn(`Missing required field: ${field}`);
+        return {
+          isValid: false,
+        };
+      }
+    }
+
+    if (typeof characterData.characterName !== "string")
+      return { isValid: false };
+    if (typeof characterData.backstory !== "string") return { isValid: false };
+
+    return { isValid: true };
   },
 
   clearError: () => {
@@ -191,6 +233,121 @@ const useCharacter = create((set, get) => ({
         success: false,
         message: error.message,
         error: error,
+      };
+    }
+  },
+
+  fetchCharacterFromDB: async (storyId) => {
+    get().clearError();
+    set({
+      loading: true,
+      error: null,
+    });
+
+    try {
+      const response = await get().makeRequestWithRetry(
+        `${process.env.NEXT_PUBLIC_BACKEND_DEV_URL}/api/character/get/${storyId}`,
+        {
+          method: "GET",
+        },
+        2
+      );
+
+      if (response.success && response.data && response.data.characterData) {
+        const characterDataArray = response.data.characterData;
+        if (!Array.isArray(characterDataArray)) {
+          throw new Error("Expected array.");
+        }
+
+        if (characterDataArray.length === 0) {
+          console.log("ℹ️ No characters found for this story");
+
+          set({
+            loading: false,
+            error: null,
+            receivedData: [],
+          });
+
+          return {
+            success: true,
+            data: { characterData: [] },
+            message: "No characters found - ready to create new ones.",
+          };
+        }
+
+        const sanitzedCharacters = [];
+        for (const character of characterDataArray) {
+          const validation = get().validateReceivedData(character);
+          if (validation.isValid) {
+            const sanitizedChar = get().sanitizeReceivedData(character);
+            sanitzedCharacters.push(sanitizedChar);
+          } else {
+            console.warn("⚠️ Skipping invalid character:", character);
+          }
+        }
+
+        set({
+          loading: false,
+          error: null,
+          receivedData: sanitzedCharacters,
+        });
+
+        return {
+          success: true,
+          data: { characterData: sanitzedCharacters },
+          message: `${sanitzedCharacters.length} character(s) fetched successfully`,
+        };
+      } else if (
+        response.success === false &&
+        (response.code === "CHARACTER_NOTFOUND" ||
+          response.message?.includes("not found") ||
+          response.message?.includes("No data found"))
+      ) {
+        console.log("ℹ️ No existing data for this character.");
+
+        set({
+          loading: false,
+          error: null,
+          receivedData: [],
+        });
+
+        return {
+          success: true,
+          data: { characterData: [] },
+          message: "No existing data - ready to create new character.",
+        };
+      } else {
+        console.warn("⚠️ Unexpected response format:", response);
+
+        set({
+          loading: false,
+          error: null,
+          receivedData: [],
+        });
+        return {
+          success: false,
+          data: { characterData: [] },
+          message: "Unexpected response format from server.",
+        };
+      }
+    } catch (error) {
+      console.log(
+        "Error fetching node data: ",
+        error,
+        "Error Message: ",
+        error.message
+      );
+
+      set({
+        loading: false,
+        receivedData: [],
+        error: error.message,
+      });
+
+      return {
+        success: false,
+        message: error,
+        error: error.message,
       };
     }
   },
