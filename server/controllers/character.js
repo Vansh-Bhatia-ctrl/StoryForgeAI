@@ -58,7 +58,7 @@ const validatePersonality = (personality) => {
 };
 
 const validateTraits = (traits) => {
-  const traitsArray = traits.split(/,\s*/).map((t) => t.trim().toLowerCase());
+  const traitsArray = traits.split(",").map((t) => t.trim().toLowerCase());
   const validTrait = /^[a-z0-9-]+$/;
   const inValidTraits = traitsArray.filter((t) => !validTrait.test(t));
 
@@ -206,7 +206,7 @@ const createCharacter = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error in createNodesController:", error);
+    console.error("Error in character.js:", error);
     return res.status(500).json({
       message: "Something went wrong",
       error: error,
