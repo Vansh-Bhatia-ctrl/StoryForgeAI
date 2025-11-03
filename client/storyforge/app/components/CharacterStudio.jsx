@@ -3,21 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import React, { useEffect, useState } from "react";
 import useCharacter from "../store/useCharacter";
 
-const TRAITS = [
-  {
-    id: 1,
-    label: "brave",
-  },
-  {
-    id: 2,
-    label: "loyal",
-  },
-  {
-    id: 3,
-    label: "hot-headed",
-  },
-];
-
 const CharacterStudio = ({ storyId }) => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [userInput, setUserInput] = useState({
@@ -105,6 +90,27 @@ const CharacterStudio = ({ storyId }) => {
     setUserInput((prev) => ({
       ...prev,
       [name]: value,
+    }));
+  };
+
+  const handleUpdate = (charData) => {
+    setModalIsOpen(true);
+    setUserInput((prev) => ({
+      ...prev,
+      characterName: charData.characterName,
+      backstory: charData.backstory,
+      personality: charData.personality,
+      traits: charData.traits,
+    }));
+  };
+
+  const handleCloseModal = () => {
+    setModalIsOpen(false);
+    setUserInput((prev) => ({
+      characterName: "",
+      backstory: "",
+      personality: "",
+      traits: "",
     }));
   };
 
@@ -209,7 +215,10 @@ const CharacterStudio = ({ storyId }) => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Edit className="text-purple-400" />
+                      <Edit
+                        onClick={() => handleUpdate(charData)}
+                        className="text-purple-400"
+                      />
                       <Trash2 className="text-red-400" />
                     </div>
                   </div>
@@ -271,7 +280,7 @@ const CharacterStudio = ({ storyId }) => {
                           </div>
                           <div className="p-5">
                             <X
-                              onClick={() => setModalIsOpen(false)}
+                              onClick={handleCloseModal}
                               className="text-slate-500 hover:text-slate-400 cursor-pointer"
                             />
                           </div>
@@ -289,6 +298,7 @@ const CharacterStudio = ({ storyId }) => {
                                   onChange={handleUserInput}
                                   className="bg-custom-gray-300 w-full p-2 placeholder:text-slate-400 rounded-md border border-slate-800 focus:outline-none focus:border-gray-700 transition-colors text-white mt-2"
                                   placeholder="e.g Marcus the Wise..."
+                                  required
                                 />
                               </div>
 
@@ -302,6 +312,7 @@ const CharacterStudio = ({ storyId }) => {
                                   onChange={handleUserInput}
                                   className="bg-custom-gray-300 w-full p-2 placeholder:text-slate-400 rounded-md border border-slate-800 focus:outline-none focus:border-gray-700 transition-colors text-white mt-2  resize-none"
                                   placeholder="Describe the history and motivations..."
+                                  required
                                 />
                               </div>
 
@@ -315,6 +326,7 @@ const CharacterStudio = ({ storyId }) => {
                                   onChange={handleUserInput}
                                   className="bg-custom-gray-300 w-full p-2 placeholder:text-slate-400 rounded-md border border-slate-800 focus:outline-none focus:border-gray-700 transition-colors text-white mt-2"
                                   placeholder="e.g wise, cautious, mysterious..."
+                                  required
                                 />
                               </div>
 
@@ -328,6 +340,7 @@ const CharacterStudio = ({ storyId }) => {
                                   onChange={handleUserInput}
                                   className="bg-custom-gray-300 w-full p-2 placeholder:text-slate-400 rounded-md border border-slate-800 focus:outline-none focus:border-gray-700 transition-colors text-white mt-2"
                                   placeholder="e.g wise, patient, mysterious..."
+                                  required
                                 />
                               </div>
 
@@ -336,6 +349,7 @@ const CharacterStudio = ({ storyId }) => {
                                   <div>
                                     <button
                                       type="button"
+                                      onClick={handleCloseModal}
                                       className="text-slate-300 bg-slate-600 p-4 rounded w-full hover:bg-slate-700 duration-200 transition-colors"
                                     >
                                       Cancel

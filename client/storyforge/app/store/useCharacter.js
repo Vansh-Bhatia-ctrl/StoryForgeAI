@@ -237,6 +237,115 @@ const useCharacter = create((set, get) => ({
     }
   },
 
+  updateCharacterInfo: async (characterId, updatedCharData = {}) => {
+    try {
+      get().clearError();
+      set({ loading: true, error: null, characterSaved: false });
+
+      if (!characterId) {
+        set({
+          loading: false,
+          error: "Story ID is required.",
+          characterSaved: false,
+        });
+        return {
+          success: false,
+          message: "Story ID is required",
+        };
+      }
+
+      const charData = {};
+
+      if (updatedCharData.characterName !== undefined) {
+        charData.characterName = updatedCharData.characterName;
+      }
+
+      if (updatedCharData.backstory !== undefined) {
+        charData.backstory = updatedCharData.backstory;
+      }
+
+      if (updatedCharData.personality !== undefined) {
+        charData.personality = updatedCharData.personality;
+      }
+
+      if (updatedCharData.traits !== undefined) {
+        charData.traits = updatedCharData.traits;
+      }
+
+      const validation = get().validateCharacterData(charData, true);
+      if (!validation.isValid) {
+        set({
+          loading: false,
+          error: validation.errors,
+          characterSaved: false,
+        });
+
+        return {
+          success: false,
+          message: "Validation failed",
+          errors: validation.errors,
+        };
+      }
+
+      const sanitizedCharData = {};
+
+      if (charData.characterName !== undefined) {
+        sanitizedCharData.characterName = get().sanitizeInput(
+          charData.characterName
+        );
+      }
+
+      if (charData.backstory !== undefined) {
+        sanitizedCharData.backstory = get().sanitizeInput(charData.backstory);
+      }
+
+      if (charData.personality !== undefined) {
+        sanitizedCharData.personality = get().sanitizeInput(
+          charData.personality
+        );
+      }
+
+      if (charData.traits !== undefined) {
+        sanitizedCharData.traits = get().sanitizeInput(charData.traits);
+      }
+
+      const response = await get().makeRequestWithRetry(
+        `${process.env.NEXT_PUBLIC_BACKEND_DEV_URL}/api/character/update/${characterId}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(sanitizedCharData),
+        },
+        2
+      );
+
+      if (response.success) {
+        set({
+          loading: false,
+          error: null,
+          characterSaved: true,
+          savedDataMessage: response.data,
+        });
+        console.log("✅ Character saved successfully:", response.data);
+        return response;
+      } else {
+        throw new Error(response.message || "Failed to save node");
+      }
+    } catch (error) {
+      console.error("❌ Error saving character information:", error.message);
+      set({
+        loading: false,
+        characterSaved: false,
+        error: error,
+      });
+
+      return {
+        success: false,
+        message: error.message,
+        error: error,
+      };
+    }
+  },
+
   fetchCharacterFromDB: async (storyId) => {
     get().clearError();
     set({
