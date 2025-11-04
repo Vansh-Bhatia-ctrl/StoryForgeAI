@@ -237,12 +237,12 @@ const useCharacter = create((set, get) => ({
     }
   },
 
-  updateCharacterInfo: async (characterId, updatedCharData = {}) => {
+  updateCharacterInfo: async (storyId, characterId, updatedCharData = {}) => {
     try {
       get().clearError();
       set({ loading: true, error: null, characterSaved: false });
 
-      if (!characterId) {
+      if (!storyId) {
         set({
           loading: false,
           error: "Story ID is required.",
@@ -251,6 +251,18 @@ const useCharacter = create((set, get) => ({
         return {
           success: false,
           message: "Story ID is required",
+        };
+      }
+
+      if (!characterId) {
+        set({
+          loading: false,
+          error: "Character ID is required.",
+          characterSaved: false,
+        });
+        return {
+          success: false,
+          message: "Character ID is required",
         };
       }
 
@@ -272,7 +284,10 @@ const useCharacter = create((set, get) => ({
         charData.traits = updatedCharData.traits;
       }
 
-      const validation = get().validateCharacterData(charData, true);
+      const validation = get().validateCharacterData(
+        { ...charData, storyId },
+        true
+      );
       if (!validation.isValid) {
         set({
           loading: false,
@@ -310,7 +325,7 @@ const useCharacter = create((set, get) => ({
       }
 
       const response = await get().makeRequestWithRetry(
-        `${process.env.NEXT_PUBLIC_BACKEND_DEV_URL}/api/character/update/${characterId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_DEV_URL}/api/character/update/${storyId}/${characterId}`,
         {
           method: "PUT",
           body: JSON.stringify(sanitizedCharData),

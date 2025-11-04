@@ -15,6 +15,7 @@ const CharacterStudio = ({ storyId }) => {
   const [characterData, setCharacterData] = useState([]);
   const [successMessage, setSuccessMessage] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingCharacterId, setEditingCharacterId] = useState(null);
 
   const {
     error,
@@ -23,6 +24,7 @@ const CharacterStudio = ({ storyId }) => {
     savedDataMessage,
     postCharacterToDB,
     fetchCharacterFromDB,
+    updateCharacterInfo,
     receivedData,
   } = useCharacter();
 
@@ -49,13 +51,36 @@ const CharacterStudio = ({ storyId }) => {
     return () => clearTimeout(timer);
   }, []);
 
-  console.log(characterData.result);
+  console.log("character data: ", characterData.result);
   const handleSubmitCharacter = async (e) => {
     e.preventDefault();
 
     console.log("Submitting data:", userInput);
 
-    if (!characterSaved) {
+    if (editingCharacterId) {
+      const result = await updateCharacterInfo(storyId, editingCharacterId, {
+        characterName: userInput.characterName,
+        backstory: userInput.backstory,
+        personality: userInput.personality,
+        traits: userInput.traits,
+      });
+      if (result && result.success) {
+        setModalIsOpen(false);
+        setEditingCharacterId(null);
+        setUserInput({
+          characterName: "",
+          backstory: "",
+          personality: "",
+          traits: "",
+        });
+        setSuccessMessage(true);
+        console.log("Information updated successfully.");
+
+        setTimeout(() => {
+          setSuccessMessage(false);
+        }, 5000);
+      }
+    } else {
       const result = await postCharacterToDB(
         userInput.characterName,
         userInput.backstory,
@@ -79,7 +104,6 @@ const CharacterStudio = ({ storyId }) => {
         }, 5000);
       }
     }
-
     if (error) {
       setSubmitError(error);
     }
@@ -95,18 +119,24 @@ const CharacterStudio = ({ storyId }) => {
 
   const handleUpdate = (charData) => {
     setModalIsOpen(true);
+    setEditingCharacterId(charData._id);
     setUserInput((prev) => ({
       ...prev,
       characterName: charData.characterName,
       backstory: charData.backstory,
-      personality: charData.personality,
-      traits: charData.traits,
+      personality: Array.isArray(charData.personality)
+        ? charData.personality.join(", ")
+        : charData.personality,
+      traits: Array.isArray(charData.traits)
+        ? charData.traits.join(", ")
+        : charData.traits,
     }));
   };
 
   const handleCloseModal = () => {
     setModalIsOpen(false);
-    setUserInput((prev) => ({
+    setEditingCharacterId(null);
+    setUserInput(() => ({
       characterName: "",
       backstory: "",
       personality: "",
@@ -199,7 +229,7 @@ const CharacterStudio = ({ storyId }) => {
               characterData.result.map((charData) => (
                 <div
                   key={charData._id}
-                  className="bg-custom-gray-500 p-4 border border-slate-800 rounded hover:scale-102 duration-300 ease-in cursor-pointer shadow-md shadow-slate-800"
+                  className="bg-custom-gray-500 p-4 border border-slate-800 rounded shadow-md shadow-slate-800"
                 >
                   <div className="flex items-start gap-2 justify-between">
                     <div>
@@ -217,9 +247,9 @@ const CharacterStudio = ({ storyId }) => {
                     <div className="flex items-center gap-2">
                       <Edit
                         onClick={() => handleUpdate(charData)}
-                        className="text-purple-400"
+                        className="text-purple-400 hover:scale-110 duration-200 ease-in cursor-pointer"
                       />
-                      <Trash2 className="text-red-400" />
+                      <Trash2 className="text-red-400 hover:scale-110 duration-200 ease-in cursor-pointer" />
                     </div>
                   </div>
                   <div className="mt-5">
