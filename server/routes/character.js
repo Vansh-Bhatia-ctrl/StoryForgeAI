@@ -7,6 +7,10 @@ const router = express.Router();
 
 router.post("/save/:storyId", verifyAuthentication, createCharacter);
 router.get("/get/:storyId", verifyAuthentication, fetchCharacter);
-router.put("/update/:characterId", verifyAuthentication, updateCharacter);
+router.put(
+  "/update/:storyId/:characterId",
+  verifyAuthentication,
+  updateCharacter
+);
 
 module.exports = router;

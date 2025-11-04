@@ -79,14 +79,15 @@ const validateTraits = (traits) => {
   return { valid: true, traits: traitsArray };
 };
 
-const verifyOwnerShip = async (characterId, userId) => {
+const verifyOwnerShip = async (characterId, storyId, userId) => {
   if (!mongoose.Types.ObjectId.isValid(userId)) {
     return { valid: false, message: "Invalid user ID format." };
   }
 
   const character = await Character.findOne({
-    characterId: characterId,
+    _id: characterId,
     userId: userId,
+    storyId: storyId,
   });
 
   if (!character) {
@@ -120,9 +121,9 @@ const updateCharacter = async (req, res) => {
     }
 
     const { characterName, backstory, personality, traits } = req.body;
-    const { characterId } = req.params;
+    const { storyId, characterId } = req.params;
 
-    const charCheck = await verifyOwnerShip(characterId, userId);
+    const charCheck = await verifyOwnerShip(characterId, storyId, userId);
     if (!charCheck.valid) {
       return res.status(404).json({
         success: false,
