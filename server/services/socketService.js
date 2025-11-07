@@ -1,3 +1,5 @@
+const Character = require("../models/character");
+const CustomAiCharacter = require("../models/customAiCharacterChat");
 const ollamaService = require("./ollamaService");
 
 let io = null;
@@ -32,6 +34,10 @@ const initializeSocket = (socketIo) => {
 
     socket.on("stream_dialogue", async (data) => {
       await handleStreamDialogue(clientId, data, socket);
+    });
+
+    socket.on("character_chat", async (data) => {
+      await handleAICharacterChat(clientId, data, socket);
     });
 
     socket.on("ping", () => {
@@ -266,11 +272,125 @@ Write natural, engaging dialogue that fits the character's personality.`;
   }
 };
 
-const aiCharacter = async (clientId, data, socket) => {
-  const { characterName, backstory, personality, traits } = data;
+const handleAICharacterChat = async (clientId, data, socket) => {
+  const {
+    characterId,
+    userId,
+    userMessage,
+    sessionId,
+    includeHistory = true,
+  } = data;
 
-  if(!characterName ){
-    socket.emit("character_error")
+  console.log(`🎭 AI Character chat request from ${clientId}`);
+
+  if (!characterId || !userId || !userMessage) {
+    socket.emit("character_chat_error", {
+      message: "characterId, userId, and userMessage are required",
+      code: "MISSING_REQUIRED_FIELDS",
+    });
+    return;
+  }
+
+  if (userMessage.trim().length === 0) {
+    socket.emit("character_chat_error", {
+      message: "Message cannot be empty",
+      code: "EMPTY_MESSAGE",
+    });
+    return;
+  }
+
+  const client = clients.get(clientId);
+  if (client) {
+    client.isStreaming = true;
+  }
+
+  socket.emit("character_chat_start", {
+    message: "Character is thinking...",
+    timestamp: new Date().toISOString(),
+  });
+
+  try {
+    const character = await Character.findById({ _id: characterId });
+
+    if (!character) {
+      socket.emit("character_chat_error", {
+        message: "Character not found",
+        code: "CHARACTER_NOT_FOUND",
+      });
+      return;
+    }
+
+    const finalSessionId =
+      sessionId || `${userId}_${characterId}_${Date.now()}`;
+
+    const chatSession = await CustomAiCharacter.findOrCreateSession(
+      userId,
+      characterId,
+      finalSessionId
+    );
+
+    await chatSession.addMessage("user", userMessage);
+
+    const recentMessages = chatSession.getRecent(6);
+    let conversationContext = "";
+    if (includeHistory && recentMessages.length > 0) {
+      conversationContext = "\n\nRECENT CONVERSATION:\n";
+      recentMessages.forEach((msg) => {
+        if (msg.role === "user") {
+          conversationContext += `User: ${msg.content}\n`;
+        } else {
+          conversationContext += `${character.name}: ${msg.content}\n`;
+        }
+      });
+    }
+
+    const ollamaContext = {
+      characterName: character.characterName,
+      backstory:
+        character.backstory || "A mysterious character with an unknown past.",
+      personality: character.personality || "neutral",
+      traits: character.traits || [],
+      scenarioContext: conversationContext,
+      currentDialogue: `User just said: "${userMessage}"`,
+      maxTokens: 150,
+    };
+
+    let fullResponse = "";
+    let totalChunks = 0;
+
+    await ollamaService.streamCharacterResponse(ollamaContext, (chunk) => {
+      totalChunks++;
+      fullResponse += chunk;
+      socket.emit("character_chat_chunk", {
+        data: chunk,
+        chunkNumber: totalChunks,
+      });
+    });
+
+    await chatSession.addMessage("character", fullResponse);
+
+    socket.emit("character_chat_complete", {
+      message: "Character response complete",
+      totalChunks: totalChunks,
+      fullResponse: fullResponse,
+      sessionId: finalSessionId,
+      timestamp: new Date().toISOString(),
+    });
+
+    console.log(
+      `✅ Character chat completed for ${clientId} (${totalChunks} chunks)`
+    );
+  } catch (error) {
+    console.error(`❌ Character chat error for ${clientId}:`, error.message);
+    socket.emit("character_chat_error", {
+      message: "Failed to generate character response",
+      error: error.message,
+      code: "CHARACTER_CHAT_ERROR",
+    });
+  } finally {
+    if (client) {
+      client.isStreaming = false;
+    }
   }
 };
 

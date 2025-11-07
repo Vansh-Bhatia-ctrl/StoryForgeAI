@@ -161,9 +161,9 @@ Format: Return only the dialogue lines, one per line, without numbering.`;
     }
   }
 
-  async characterCompletion(context = {}) {
+  async streamCharacterResponse(context = {}, onChunk) {
     const {
-      maxTokens = 80,
+      maxTokens = 150,
       characterName = "Unknown Character",
       backstory = "A mysterious figure with an unclear past.",
       personality = "neutral and balanced",
@@ -199,9 +199,9 @@ INSTRUCTIONS:
 
 Respond as ${characterName}:`;
 
-    return await this.generateCompletion(prompt, {
+    return await this.streamCompletion(prompt, onChunk, {
       maxTokens,
-      temperature: 0.8,
+      temperature: 0.85,
     });
   }
 }
