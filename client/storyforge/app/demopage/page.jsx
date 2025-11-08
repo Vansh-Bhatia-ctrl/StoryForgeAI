@@ -528,611 +528,301 @@
 
 //STORY EDITOR PAGE
 "use client";
-import React, { useState, useCallback } from 'react';
-import ReactFlow, { 
-  MiniMap, 
-  Controls, 
-  Background,
-  useNodesState,
-  useEdgesState,
-  addEdge,
-  MarkerType
-} from 'reactflow';
-import 'reactflow/dist/style.css';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  GitBranch, 
-  Users, 
-  User, 
-  MessageSquare, 
-  Plus,
-  Trash2,
-  Edit,
-  Send,
-  Sparkles,
-  BookOpen,
-  Zap
-} from 'lucide-react';
+import React, { useState } from 'react';
+import { Send, User, ArrowLeft, MessageSquare } from 'lucide-react';
 
-// Initial nodes and edges for the story flow
-const initialNodes = [
-  {
-    id: '1',
-    type: 'input',
-    data: { label: 'Story Beginning: The Hero\'s Call' },
-    position: { x: 250, y: 5 },
-    style: { background: '#6366f1', color: 'white', border: '2px solid #4f46e5', borderRadius: '8px', padding: '10px' }
-  },
-  {
-    id: '2',
-    data: { label: 'Choice: Accept the Quest' },
-    position: { x: 100, y: 150 },
-    style: { background: '#10b981', color: 'white', border: '2px solid #059669', borderRadius: '8px', padding: '10px' }
-  },
-  {
-    id: '3',
-    data: { label: 'Choice: Refuse and Stay Home' },
-    position: { x: 400, y: 150 },
-    style: { background: '#ef4444', color: 'white', border: '2px solid #dc2626', borderRadius: '8px', padding: '10px' }
-  },
-];
-
-const initialEdges = [
-  { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: '#10b981' }, markerEnd: { type: MarkerType.ArrowClosed } },
-  { id: 'e1-3', source: '1', target: '3', animated: true, style: { stroke: '#ef4444' }, markerEnd: { type: MarkerType.ArrowClosed } },
-];
-
-const StoryForgeEditor = () => {
-  const [activeTab, setActiveTab] = useState('flow');
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  
-  // Character Studio State
-  const [characters, setCharacters] = useState([
+const CharacterChat = () => {
+  // Sample character data - replace with your actual data from backend
+  const [characters] = useState([
     {
       id: 1,
-      name: 'Elena the Brave',
-      backstory: 'A fearless knight who lost her family to a dragon attack.',
-      personality: 'Courageous, determined, sometimes reckless',
-      traits: ['brave', 'loyal', 'hot-headed'],
-      hasAI: true
+      name: "Elena the Wise",
+      personality: "Wise and mystical",
+      avatar: "🧙‍♀️",
+      lastMessage: "The prophecy speaks of great change..."
+    },
+    {
+      id: 2,
+      name: "Marcus the Brave",
+      personality: "Courageous warrior",
+      avatar: "⚔️",
+      lastMessage: "We must prepare for battle!"
+    },
+    {
+      id: 3,
+      name: "Luna the Healer",
+      personality: "Gentle and caring",
+      avatar: "🌙",
+      lastMessage: "Your wounds will heal in time."
     }
   ]);
-  const [showCharacterForm, setShowCharacterForm] = useState(false);
-  const [newCharacter, setNewCharacter] = useState({
-    name: '',
-    backstory: '',
-    personality: '',
-    traits: []
-  });
 
-  // AI Chat State
   const [selectedCharacter, setSelectedCharacter] = useState(null);
-  const [chatMessages, setChatMessages] = useState([]);
-  const [currentMessage, setCurrentMessage] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Collaboration State
-  const [collaborators, setCollaborators] = useState([
-    { id: 1, name: 'Alex Chen', status: 'online', lastEdit: '2 min ago', avatar: '👨‍💻' },
-    { id: 2, name: 'Sarah Miller', status: 'online', lastEdit: '5 min ago', avatar: '👩‍🎨' },
-    { id: 3, name: 'Mike Johnson', status: 'away', lastEdit: '1 hour ago', avatar: '👨‍🎨' }
-  ]);
-  const [recentChanges, setRecentChanges] = useState([
-    { user: 'Alex Chen', action: 'Added new story node', time: '2 min ago', node: 'The Dark Forest' },
-    { user: 'Sarah Miller', action: 'Updated character dialogue', time: '5 min ago', node: 'Village Elder' },
-    { user: 'You', action: 'Created new branch', time: '10 min ago', node: 'Dragon\'s Lair' }
-  ]);
-
-  // React Flow handlers
-  const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
-
-  const addNewNode = () => {
-    const newNode = {
-      id: `${nodes.length + 1}`,
-      data: { label: 'New Story Node' },
-      position: { x: Math.random() * 400, y: nodes.length * 100 + 100 },
-      style: { background: '#8b5cf6', color: 'white', border: '2px solid #7c3aed', borderRadius: '8px', padding: '10px' }
-    };
-    setNodes((nds) => [...nds, newNode]);
+  // Handle character selection
+  const handleSelectCharacter = (character) => {
+    setSelectedCharacter(character);
+    // Load chat history for this character (implement backend call here)
+    setMessages([
+      {
+        id: 1,
+        sender: 'character',
+        text: `Hello! I'm ${character.name}. How can I assist you today?`,
+        timestamp: new Date()
+      }
+    ]);
   };
 
-  // Character handlers
-  const addCharacter = () => {
-    if (newCharacter.name && newCharacter.personality) {
-      setCharacters([...characters, {
-        id: characters.length + 1,
-        ...newCharacter,
-        hasAI: false,
-        traits: newCharacter.traits.filter(t => t.trim() !== '')
-      }]);
-      setNewCharacter({ name: '', backstory: '', personality: '', traits: [] });
-      setShowCharacterForm(false);
-    }
-  };
+  // Handle sending message
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!inputMessage.trim() || isLoading) return;
 
-  const createAIAgent = (characterId) => {
-    setCharacters(characters.map(char => 
-      char.id === characterId ? { ...char, hasAI: true } : char
-    ));
-  };
-
-  const deleteCharacter = (characterId) => {
-    setCharacters(characters.filter(char => char.id !== characterId));
-  };
-
-  // AI Chat handlers
-  const sendMessage = () => {
-    if (!currentMessage.trim() || !selectedCharacter) return;
-
-    const userMsg = {
+    // Add user message
+    const userMessage = {
       id: Date.now(),
       sender: 'user',
-      text: currentMessage,
-      timestamp: new Date().toLocaleTimeString()
+      text: inputMessage,
+      timestamp: new Date()
     };
+    setMessages(prev => [...prev, userMessage]);
+    setInputMessage('');
+    setIsLoading(true);
 
-    // Simulate AI response (in real app, this would call your Ollama API)
-    const aiResponse = {
-      id: Date.now() + 1,
-      sender: 'ai',
-      text: generateCharacterResponse(currentMessage, selectedCharacter),
-      timestamp: new Date().toLocaleTimeString()
-    };
-
-    setChatMessages([...chatMessages, userMsg, aiResponse]);
-    setCurrentMessage('');
+    // TODO: Call your Ollama API here
+    // Simulating AI response for now
+    setTimeout(() => {
+      const aiMessage = {
+        id: Date.now() + 1,
+        sender: 'character',
+        text: `As ${selectedCharacter.name}, I respond to your message...`,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, aiMessage]);
+      setIsLoading(false);
+    }, 1000);
   };
 
-  const generateCharacterResponse = (message, character) => {
-    // This is a mock response. In production, you'd call your Ollama API here
-    const responses = [
-      `*${character.name} speaks in a ${character.personality} manner* "${message.toLowerCase().includes('quest') ? 'The quest you speak of is dangerous, but I fear no challenge!' : 'Interesting... tell me more.'}"`,
-      `*${character.name} considers your words* "Based on my personality as ${character.personality}, I believe ${message.toLowerCase().includes('help') ? 'I should aid you in this endeavor.' : 'we should proceed with caution.'}"`,
-      `"As someone who is ${character.personality}, I ${message.toLowerCase().includes('danger') ? 'embrace the thrill of danger!' : 'approach this thoughtfully.'}" *${character.name} says firmly*`
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
+  // Back to character list (mobile)
+  const handleBack = () => {
+    setSelectedCharacter(null);
   };
-
-  const tabs = [
-    { id: 'flow', name: 'Visual Flow', icon: GitBranch },
-    { id: 'collab', name: 'Collaboration', icon: Users },
-    { id: 'characters', name: 'Character Studio', icon: User },
-    { id: 'ai-chat', name: 'AI Character Chat', icon: MessageSquare }
-  ];
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col">
-      {/* Header */}
-      <div className="bg-slate-800/50 backdrop-blur-sm border-b border-purple-500/30 p-4">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-2 rounded-lg">
-              <BookOpen className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">StoryForge AI</h1>
-              <p className="text-sm text-purple-300">Story Editor</p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <button className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center gap-2">
-              <Sparkles className="w-4 h-4" />
-              AI Assist
-            </button>
-            <button className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
-              Save Story
-            </button>
-          </div>
+    <div className="flex h-screen bg-[#0a1628] mt-20">
+      {/* CHARACTER LIST SIDEBAR */}
+      <div 
+        className={`
+          ${selectedCharacter ? 'hidden md:flex' : 'flex'}
+          w-full md:w-80 lg:w-96
+          flex-col
+          bg-[#0f1f3a]
+          border-r border-gray-800
+        `}
+      >
+        {/* Sidebar Header */}
+        <div className="p-6 border-b border-gray-800">
+          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+            <MessageSquare className="w-6 h-6 text-[#3b82f6]" />
+            Your Characters
+          </h2>
+          <p className="text-gray-400 text-sm mt-1">
+            Select a character to chat with
+          </p>
         </div>
-      </div>
 
-      {/* Tab Navigation */}
-      <div className="bg-slate-800/30 backdrop-blur-sm border-b border-purple-500/20">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex gap-1">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-6 py-3 flex items-center gap-2 transition-all relative ${
-                    activeTab === tab.id
-                      ? 'text-white'
-                      : 'text-purple-300 hover:text-white'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  {tab.name}
-                  {activeTab === tab.id && (
-                    <motion.div
-                      layoutId="activeTab"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500"
-                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Content Area */}
-      <div className="flex-1 overflow-hidden">
-        <AnimatePresence mode="wait">
-          {/* Visual Flow Tab */}
-          {activeTab === 'flow' && (
-            <motion.div
-              key="flow"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="h-full relative"
+        {/* Character List */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {characters.map((character) => (
+            <button
+              key={character.id}
+              onClick={() => handleSelectCharacter(character)}
+              className={`
+                w-full p-4 rounded-lg text-left
+                transition-all duration-200
+                hover:bg-[#1a2942] hover:scale-[1.02]
+                ${selectedCharacter?.id === character.id 
+                  ? 'bg-[#1a2942] border-l-4 border-[#3b82f6]' 
+                  : 'bg-[#0a1628] border-l-4 border-transparent'
+                }
+              `}
             >
-              <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
-                fitView
-                className="bg-slate-900"
-              >
-                <Background color="#6366f1" gap={16} />
-                <Controls className="bg-slate-800 border border-purple-500/30" />
-                <MiniMap 
-                  nodeColor={(node) => {
-                    if (node.type === 'input') return '#6366f1';
-                    return '#8b5cf6';
-                  }}
-                  className="bg-slate-800 border border-purple-500/30"
-                />
-              </ReactFlow>
-              
-              <button
-                onClick={addNewNode}
-                className="absolute bottom-24 right-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 transition-all hover:scale-105"
-              >
-                <Plus className="w-5 h-5" />
-                Add Story Node
+              <div className="flex items-start gap-3">
+                {/* Avatar */}
+                <div className="text-4xl flex-shrink-0">
+                  {character.avatar}
+                </div>
+                
+                {/* Character Info */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-white font-semibold truncate">
+                    {character.name}
+                  </h3>
+                  <p className="text-gray-500 text-xs mt-1">
+                    {character.personality}
+                  </p>
+                  <p className="text-gray-400 text-sm mt-2 truncate">
+                    {character.lastMessage}
+                  </p>
+                </div>
+              </div>
+            </button>
+          ))}
+
+          {/* Empty State */}
+          {characters.length === 0 && (
+            <div className="text-center py-12">
+              <User className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-400">No characters created yet</p>
+              <button className="mt-4 px-4 py-2 bg-[#3b82f6] text-white rounded-lg hover:bg-[#2563eb] transition-colors">
+                Create Character
               </button>
-
-            
-            </motion.div>
+            </div>
           )}
+        </div>
+      </div>
 
-          {/* Collaboration Tab */}
-          {activeTab === 'collab' && (
-            <motion.div
-              key="collab"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="h-full overflow-auto p-6"
-            >
-              <div className="max-w-6xl mx-auto space-y-6">
-                {/* Active Collaborators */}
-                <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30">
-                  <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                    <Users className="w-5 h-5 text-purple-400" />
-                    Active Collaborators
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {collaborators.map((collab) => (
-                      <div key={collab.id} className="bg-slate-700/50 rounded-lg p-4 border border-purple-500/20">
-                        <div className="flex items-center gap-3">
-                          <div className="text-3xl">{collab.avatar}</div>
-                          <div className="flex-1">
-                            <h3 className="text-white font-semibold">{collab.name}</h3>
-                            <div className="flex items-center gap-2 mt-1">
-                              <div className={`w-2 h-2 rounded-full ${collab.status === 'online' ? 'bg-green-400' : 'bg-yellow-400'}`} />
-                              <span className="text-sm text-purple-300">{collab.status}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <p className="text-xs text-purple-400 mt-2">Last edit: {collab.lastEdit}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+      {/* CHAT WINDOW */}
+      <div 
+        className={`
+          ${selectedCharacter ? 'flex' : 'hidden md:flex'}
+          flex-1 flex-col
+          bg-[#0a1628]
+        `}
+      >
+        {selectedCharacter ? (
+          <>
+            {/* Chat Header */}
+            <div className="p-4 border-b border-gray-800 bg-[#0f1f3a]">
+              <div className="flex items-center gap-3">
+                {/* Back Button (Mobile) */}
+                <button 
+                  onClick={handleBack}
+                  className="md:hidden p-2 hover:bg-[#1a2942] rounded-lg transition-colors"
+                >
+                  <ArrowLeft className="w-5 h-5 text-gray-400" />
+                </button>
 
-                {/* Recent Changes */}
-                <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30">
-                  <h2 className="text-xl font-bold text-white mb-4">Recent Changes</h2>
-                  <div className="space-y-3">
-                    {recentChanges.map((change, idx) => (
-                      <div key={idx} className="bg-slate-700/30 rounded-lg p-4 border border-purple-500/10">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className="text-white">
-                              <span className="font-semibold text-purple-400">{change.user}</span> {change.action}
-                            </p>
-                            <p className="text-sm text-purple-300 mt-1">Node: {change.node}</p>
-                          </div>
-                          <span className="text-xs text-purple-400">{change.time}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Live Activity Feed */}
-                <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30">
-                  <h2 className="text-xl font-bold text-white mb-4">Live Activity Feed</h2>
-                  <div className="h-48 bg-slate-900/50 rounded-lg p-4 overflow-y-auto">
-                    <p className="text-purple-300 text-sm">🟢 Real-time collaboration updates will appear here...</p>
-                    <p className="text-purple-400 text-xs mt-2">WebSocket connection: Ready</p>
-                  </div>
+                {/* Character Info */}
+                <div className="text-3xl">{selectedCharacter.avatar}</div>
+                <div>
+                  <h3 className="text-white font-semibold text-lg">
+                    {selectedCharacter.name}
+                  </h3>
+                  <p className="text-gray-400 text-sm">
+                    {selectedCharacter.personality}
+                  </p>
                 </div>
               </div>
-            </motion.div>
-          )}
+            </div>
 
-          {/* Character Studio Tab */}
-          {activeTab === 'characters' && (
-            <motion.div
-              key="characters"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="h-full overflow-auto p-6"
-            >
-              <div className="max-w-6xl mx-auto space-y-6">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <User className="w-6 h-6 text-purple-400" />
-                    Character Studio
-                  </h2>
-                  <button
-                    onClick={() => setShowCharacterForm(!showCharacterForm)}
-                    className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg flex items-center gap-2 transition-all"
+            {/* Messages Area */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`
+                    flex
+                    ${message.sender === 'user' ? 'justify-end' : 'justify-start'}
+                  `}
+                >
+                  <div
+                    className={`
+                      max-w-[80%] md:max-w-[70%] lg:max-w-[60%]
+                      px-4 py-3 rounded-2xl
+                      ${message.sender === 'user'
+                        ? 'bg-[#3b82f6] text-white rounded-br-sm'
+                        : 'bg-[#0f1f3a] text-gray-100 rounded-bl-sm'
+                      }
+                    `}
                   >
-                    <Plus className="w-4 h-4" />
-                    New Character
-                  </button>
+                    <p className="text-sm md:text-base leading-relaxed">
+                      {message.text}
+                    </p>
+                    <p className="text-xs mt-2 opacity-60">
+                      {message.timestamp.toLocaleTimeString([], { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </p>
+                  </div>
                 </div>
+              ))}
 
-                {/* Character Creation Form */}
-                {showCharacterForm && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30"
-                  >
-                    <h3 className="text-xl font-bold text-white mb-4">Create New Character</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-purple-300 mb-2">Character Name</label>
-                        <input
-                          type="text"
-                          value={newCharacter.name}
-                          onChange={(e) => setNewCharacter({...newCharacter, name: e.target.value})}
-                          className="w-full bg-slate-900/50 border border-purple-500/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
-                          placeholder="e.g., Marcus the Wise"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-purple-300 mb-2">Backstory</label>
-                        <textarea
-                          value={newCharacter.backstory}
-                          onChange={(e) => setNewCharacter({...newCharacter, backstory: e.target.value})}
-                          className="w-full bg-slate-900/50 border border-purple-500/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500 h-24"
-                          placeholder="Describe their history and motivations..."
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-purple-300 mb-2">Personality</label>
-                        <input
-                          type="text"
-                          value={newCharacter.personality}
-                          onChange={(e) => setNewCharacter({...newCharacter, personality: e.target.value})}
-                          className="w-full bg-slate-900/50 border border-purple-500/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
-                          placeholder="e.g., Wise, cautious, mysterious"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-purple-300 mb-2">Traits (comma-separated)</label>
-                        <input
-                          type="text"
-                          onChange={(e) => setNewCharacter({...newCharacter, traits: e.target.value.split(',')})}
-                          className="w-full bg-slate-900/50 border border-purple-500/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
-                          placeholder="e.g., wise, patient, mysterious"
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={addCharacter}
-                          className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
-                        >
-                          Create Character
-                        </button>
-                        <button
-                          onClick={() => setShowCharacterForm(false)}
-                          className="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Character List */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {characters.map((character) => (
-                    <motion.div
-                      key={character.id}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30 hover:border-purple-500/50 transition-all"
-                    >
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <h3 className="text-xl font-bold text-white mb-1">{character.name}</h3>
-                          <p className="text-sm text-purple-300">{character.personality}</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <button className="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">
-                            <Edit className="w-4 h-4 text-purple-400" />
-                          </button>
-                          <button 
-                            onClick={() => deleteCharacter(character.id)}
-                            className="p-2 bg-slate-700 hover:bg-red-600 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4 text-red-400" />
-                          </button>
-                        </div>
-                      </div>
-                      
-                      <p className="text-purple-200 text-sm mb-4">{character.backstory}</p>
-                      
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {character.traits.map((trait, idx) => (
-                          <span key={idx} className="px-3 py-1 bg-purple-900/50 text-purple-300 rounded-full text-xs">
-                            {trait}
-                          </span>
-                        ))}
-                      </div>
-
-                      <div className="border-t border-purple-500/20 pt-4">
-                        {character.hasAI ? (
-                          <div className="flex items-center gap-2 text-green-400 text-sm">
-                            <Sparkles className="w-4 h-4" />
-                            <span>AI Agent Active</span>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => createAIAgent(character.id)}
-                            className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg flex items-center justify-center gap-2 transition-all"
-                          >
-                            <Sparkles className="w-4 h-4" />
-                            Create AI Agent
-                          </button>
-                        )}
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* AI Character Chat Tab */}
-          {activeTab === 'ai-chat' && (
-            <motion.div
-              key="ai-chat"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="h-full flex"
-            >
-              {/* Character Selector Sidebar */}
-              <div className="w-80 bg-slate-800/50 backdrop-blur-sm border-r border-purple-500/30 p-4 overflow-y-auto">
-                <h3 className="text-white font-bold mb-4">AI Characters</h3>
-                <div className="space-y-2">
-                  {characters.filter(c => c.hasAI).map((character) => (
-                    <button
-                      key={character.id}
-                      onClick={() => {
-                        setSelectedCharacter(character);
-                        setChatMessages([]);
-                      }}
-                      className={`w-full p-4 rounded-lg text-left transition-all ${
-                        selectedCharacter?.id === character.id
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-slate-700/50 text-purple-300 hover:bg-slate-700'
-                      }`}
-                    >
-                      <div className="font-semibold mb-1">{character.name}</div>
-                      <div className="text-xs opacity-75">{character.personality}</div>
-                    </button>
-                  ))}
-                </div>
-                {characters.filter(c => c.hasAI).length === 0 && (
-                  <p className="text-purple-400 text-sm">No AI agents created yet. Create one in Character Studio!</p>
-                )}
-              </div>
-
-              {/* Chat Area */}
-              <div className="flex-1 flex flex-col">
-                {selectedCharacter ? (
-                  <>
-                    {/* Chat Header */}
-                    <div className="bg-slate-800/50 backdrop-blur-sm border-b border-purple-500/30 p-4">
-                      <h2 className="text-xl font-bold text-white">Chat with {selectedCharacter.name}</h2>
-                      <p className="text-sm text-purple-300">{selectedCharacter.personality}</p>
-                    </div>
-
-                    {/* Messages */}
-                    <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                      {chatMessages.length === 0 && (
-                        <div className="text-center text-purple-400 mt-12">
-                          <MessageSquare className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                          <p>Start a conversation with {selectedCharacter.name}</p>
-                          <p className="text-sm mt-2 text-purple-500">They'll respond based on their personality and backstory</p>
-                        </div>
-                      )}
-                      {chatMessages.map((msg) => (
-                        <div
-                          key={msg.id}
-                          className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                        >
-                          <div
-                            className={`max-w-lg rounded-xl p-4 ${
-                              msg.sender === 'user'
-                                ? 'bg-purple-600 text-white'
-                                : 'bg-slate-800/50 text-purple-100 border border-purple-500/30'
-                            }`}
-                          >
-                            <p className="mb-1">{msg.text}</p>
-                            <p className="text-xs opacity-75">{msg.timestamp}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Input Area */}
-                    <div className="bg-slate-800/50 backdrop-blur-sm border-t border-purple-500/30 p-4">
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={currentMessage}
-                          onChange={(e) => setCurrentMessage(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                          className="flex-1 bg-slate-900/50 border border-purple-500/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500"
-                          placeholder="Type your message..."
-                        />
-                        <button
-                          onClick={sendMessage}
-                          className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg flex items-center gap-2 transition-all"
-                        >
-                          <Send className="w-4 h-4" />
-                          Send
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex-1 flex items-center justify-center">
-                    <div className="text-center text-purple-400">
-                      <MessageSquare className="w-24 h-24 mx-auto mb-4 opacity-30" />
-                      <p className="text-xl">Select a character to start chatting</p>
+              {/* Loading Indicator */}
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-[#0f1f3a] px-4 py-3 rounded-2xl rounded-bl-sm">
+                    <div className="flex gap-2">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                     </div>
                   </div>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                </div>
+              )}
+            </div>
+
+            {/* Message Input */}
+            <div className="p-4 border-t border-gray-800 bg-[#0f1f3a]">
+              <form onSubmit={handleSendMessage} className="flex gap-2">
+                <input
+                  type="text"
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  placeholder={`Chat with ${selectedCharacter.name}...`}
+                  className="
+                    flex-1 px-4 py-3 rounded-xl
+                    bg-[#0a1628] text-white
+                    border border-gray-700
+                    focus:outline-none focus:border-[#3b82f6]
+                    placeholder-gray-500
+                    transition-colors
+                  "
+                  disabled={isLoading}
+                />
+                <button
+                  type="submit"
+                  disabled={!inputMessage.trim() || isLoading}
+                  className="
+                    px-6 py-3 rounded-xl
+                    bg-[#3b82f6] hover:bg-[#2563eb]
+                    disabled:bg-gray-700 disabled:cursor-not-allowed
+                    transition-colors
+                    flex items-center gap-2
+                  "
+                >
+                  <Send className="w-5 h-5 text-white" />
+                  <span className="hidden sm:inline text-white font-medium">
+                    Send
+                  </span>
+                </button>
+              </form>
+            </div>
+          </>
+        ) : (
+          // Empty State - No Character Selected
+          <div className="flex-1 flex items-center justify-center p-8">
+            <div className="text-center max-w-md">
+              <MessageSquare className="w-20 h-20 text-gray-700 mx-auto mb-6" />
+              <h3 className="text-2xl font-bold text-white mb-2">
+                Select a Character
+              </h3>
+              <p className="text-gray-400">
+                Choose a character from the sidebar to start chatting
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default StoryForgeEditor;
-
-
+export default CharacterChat;
 
 
 

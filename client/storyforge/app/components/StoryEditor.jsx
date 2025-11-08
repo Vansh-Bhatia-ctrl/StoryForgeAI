@@ -20,11 +20,6 @@ const OPTIONS = [
     label: "Character Studio",
     icon: User,
   },
-  {
-    id: 4,
-    label: "AI Character Chat",
-    icon: MessageSquare,
-  },
 ];
 
 const StoryEditorNavbar = ({ storyId }) => {

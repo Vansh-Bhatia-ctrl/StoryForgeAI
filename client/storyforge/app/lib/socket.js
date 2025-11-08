@@ -4,11 +4,16 @@ let socket = null;
 
 export const getSocket = () => {
   if (!socket) {
+    const token = localStorage.getItem("accessToken");
+
     socket = io(`${process.env.NEXT_PUBLIC_BACKEND_DEV_URL}`, {
       autoConnect: false,
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      auth: {
+        token: token,
+      },
     });
 
     socket.on("connect_error", (error) => {

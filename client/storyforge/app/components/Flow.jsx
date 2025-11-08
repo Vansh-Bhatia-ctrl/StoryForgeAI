@@ -92,7 +92,7 @@ const Flow = ({ storyId }) => {
   const onNodeClick = useCallback(
     (event, node) => {
       console.log("Node clicked: ", node.id);
-      router.push(`/stories/${storyId}/${node.id}`);
+      router.push(`/stories/${storyId}/node/${node.id}`);
     },
     [router, storyId]
   );

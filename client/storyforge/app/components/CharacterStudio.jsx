@@ -2,6 +2,7 @@ import { Edit, Loader2, Trash2, User, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import React, { useEffect, useState } from "react";
 import useCharacter from "../store/useCharacter";
+import Link from "next/link";
 
 const CharacterStudio = ({ storyId }) => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
@@ -51,7 +52,6 @@ const CharacterStudio = ({ storyId }) => {
     return () => clearTimeout(timer);
   }, []);
 
-  console.log("character data: ", characterData.result);
   const handleSubmitCharacter = async (e) => {
     e.preventDefault();
 
@@ -227,52 +227,54 @@ const CharacterStudio = ({ storyId }) => {
             {/*Character Card*/}
             {characterData.result ? (
               characterData.result.map((charData) => (
-                <div
+                <Link
+                  href={`/stories/${storyId}/character/${charData.characterId}`}
                   key={charData._id}
-                  className="bg-custom-gray-500 p-4 border border-slate-800 rounded shadow-md shadow-slate-800"
                 >
-                  <div className="flex items-start gap-2 justify-between">
-                    <div>
-                      <p className="text-white font-semibold text-lg">
-                        {charData.characterName}
-                      </p>
-                      <div className="flex items-center gap-3">
-                        {charData.personality.map((char, index) => (
-                          <p key={index} className="text-slate-400 text-sm">
-                            {char}
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Edit
-                        onClick={() => handleUpdate(charData)}
-                        className="text-purple-400 hover:scale-110 duration-200 ease-in cursor-pointer"
-                      />
-                      <Trash2 className="text-red-400 hover:scale-110 duration-200 ease-in cursor-pointer" />
-                    </div>
-                  </div>
-                  <div className="mt-5">
-                    <div>
+                  <div className="bg-custom-gray-500 p-4 border border-slate-800 rounded shadow-md shadow-slate-800 mb-5">
+                    <div className="flex items-start gap-2 justify-between">
                       <div>
-                        <p className="text-slate-300 text-sm">
-                          {charData.backstory}
+                        <p className="text-white font-semibold text-lg">
+                          {charData.characterName}
                         </p>
+                        <div className="flex items-center gap-2">
+                          {charData.personality.map((char, index) => (
+                            <p key={index} className="text-slate-400 text-sm">
+                              {char},
+                            </p>
+                          ))}
+                        </div>
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Edit
+                          onClick={() => handleUpdate(charData)}
+                          className="text-purple-400 hover:scale-110 duration-200 ease-in cursor-pointer"
+                        />
+                        <Trash2 className="text-red-400 hover:scale-110 duration-200 ease-in cursor-pointer" />
+                      </div>
+                    </div>
+                    <div className="mt-5">
+                      <div>
+                        <div>
+                          <p className="text-slate-300 text-sm">
+                            {charData.backstory}
+                          </p>
+                        </div>
 
-                      <div className="flex items-center gap-2 mt-3">
-                        {charData.traits.map((trait, index) => (
-                          <div
-                            key={index}
-                            className="bg-white/20 p-2 rounded-full"
-                          >
-                            <p className="text-white/70 text-sm">{trait}</p>
-                          </div>
-                        ))}
+                        <div className="flex items-center gap-2 mt-3">
+                          {charData.traits.map((trait, index) => (
+                            <div
+                              key={index}
+                              className="bg-white/20 p-2 rounded-full"
+                            >
+                              <p className="text-white/70 text-sm">{trait}</p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))
             ) : (
               <div className="text-white">No characters found</div>
