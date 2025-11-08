@@ -14,6 +14,7 @@ const fetchStoryCard = require("./routes/fetchStoryCards");
 const nodeRoutes = require("./routes/nodeRoutes");
 const fetchNodes = require("./routes/fetchNodes");
 const characterFunctions = require("./routes/character");
+const fetchCharacter = require("./routes/fetchCharacter");
 
 const ollamaService = require("./services/ollamaService");
 const {
@@ -100,6 +101,7 @@ app.use("/api/fetch-story", fetchStoryCard);
 app.use("/api/nodes", nodeRoutes);
 app.use("/api/fetch-nodes", fetchNodes);
 app.use("/api/character", characterFunctions);
+app.use("/api/fetch", fetchCharacter);
 
 app.use((req, res, next) => {
   res.status(404).json({

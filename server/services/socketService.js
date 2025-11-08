@@ -273,19 +273,37 @@ Write natural, engaging dialogue that fits the character's personality.`;
 };
 
 const handleAICharacterChat = async (clientId, data, socket) => {
-  const {
-    characterId,
-    userId,
-    userMessage,
-    sessionId,
-    includeHistory = true,
-  } = data;
+  const { characterId, userMessage, sessionId, includeHistory = true } = data;
 
   console.log(`🎭 AI Character chat request from ${clientId}`);
 
-  if (!characterId || !userId || !userMessage) {
+  const token =
+    socket.handshake.auth.token ||
+    socket.handshake.headers.authorization?.split(" ")[1];
+
+  if (!token) {
     socket.emit("character_chat_error", {
-      message: "characterId, userId, and userMessage are required",
+      message: "Authentication required",
+      code: "NO_TOKEN",
+    });
+    return;
+  }
+
+  let userId;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    userId = decoded.userId;
+  } catch (error) {
+    socket.emit("character_chat_error", {
+      message: "Invalid authentication token",
+      code: "INVALID_TOKEN",
+    });
+    return;
+  }
+
+  if (!characterId || !userMessage) {
+    socket.emit("character_chat_error", {
+      message: "characterId and userMessage are required",
       code: "MISSING_REQUIRED_FIELDS",
     });
     return;
@@ -310,7 +328,7 @@ const handleAICharacterChat = async (clientId, data, socket) => {
   });
 
   try {
-    const character = await Character.findById({ _id: characterId });
+    const character = await Character.findOne({ characterId: characterId });
 
     if (!character) {
       socket.emit("character_chat_error", {
