@@ -227,14 +227,13 @@ const CharacterStudio = ({ storyId }) => {
             {/*Character Card*/}
             {characterData.result ? (
               characterData.result.map((charData) => (
-                <Link
-                  href={`/stories/${storyId}/character/${charData.characterId}`}
-                  key={charData._id}
-                >
+                <div key={charData._id}>
                   <div className="bg-custom-gray-500 p-4 border border-slate-800 rounded shadow-md shadow-slate-800 mb-5">
                     <div className="flex items-start gap-2 justify-between">
-                      <div>
-                        <p className="text-white font-semibold text-lg">
+                      <Link
+                        href={`/stories/${storyId}/character/${charData.characterId}`}
+                      >
+                        <p className="text-white font-semibold text-lg hover:text-white/80">
                           {charData.characterName}
                         </p>
                         <div className="flex items-center gap-2">
@@ -244,7 +243,7 @@ const CharacterStudio = ({ storyId }) => {
                             </p>
                           ))}
                         </div>
-                      </div>
+                      </Link>
                       <div className="flex items-center gap-2">
                         <Edit
                           onClick={() => handleUpdate(charData)}
@@ -274,7 +273,7 @@ const CharacterStudio = ({ storyId }) => {
                       </div>
                     </div>
                   </div>
-                </Link>
+                </div>
               ))
             ) : (
               <div className="text-white">No characters found</div>

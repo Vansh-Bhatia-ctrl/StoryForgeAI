@@ -11,8 +11,9 @@ export const getSocket = () => {
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
-      auth: {
-        token: token,
+      auth: (cb) => {
+        const token = localStorage.getItem("accessToken");
+        cb({ token });
       },
     });
 
