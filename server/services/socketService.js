@@ -1,6 +1,8 @@
 const Character = require("../models/character");
 const CustomAiCharacter = require("../models/customAiCharacterChat");
 const ollamaService = require("./ollamaService");
+const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 
 let io = null;
 const clients = new Map();
@@ -273,15 +275,29 @@ Write natural, engaging dialogue that fits the character's personality.`;
 };
 
 const handleAICharacterChat = async (clientId, data, socket) => {
-  const { characterId, userMessage, sessionId, includeHistory = true } = data;
+  const {
+    characterId,
+    userMessage,
+    sessionId,
+    includeHistory = true,
+    token,
+  } = data;
 
   console.log(`🎭 AI Character chat request from ${clientId}`);
 
-  const token =
+  console.log("📦 Received data:", {
+    hasToken: !!token,
+    hasCharacterId: !!characterId,
+    hasMessage: !!userMessage,
+    tokenPreview: token ? `${token.substring(0, 20)}...` : "NONE",
+  });
+
+  const authToken =
+    token ||
     socket.handshake.auth.token ||
     socket.handshake.headers.authorization?.split(" ")[1];
 
-  if (!token) {
+  if (!authToken) {
     socket.emit("character_chat_error", {
       message: "Authentication required",
       code: "NO_TOKEN",
@@ -291,8 +307,11 @@ const handleAICharacterChat = async (clientId, data, socket) => {
 
   let userId;
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(authToken, process.env.JWT_SECRET);
     userId = decoded.userId;
+    userId = new mongoose.Types.ObjectId(userId);
+
+    console.log("✅ Token verified! UserId:", userId);
   } catch (error) {
     socket.emit("character_chat_error", {
       message: "Invalid authentication token",
@@ -357,7 +376,7 @@ const handleAICharacterChat = async (clientId, data, socket) => {
         if (msg.role === "user") {
           conversationContext += `User: ${msg.content}\n`;
         } else {
-          conversationContext += `${character.name}: ${msg.content}\n`;
+          conversationContext += `${character.characterName}: ${msg.content}\n`;
         }
       });
     }

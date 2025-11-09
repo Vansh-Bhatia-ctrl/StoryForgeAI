@@ -26,8 +26,7 @@ const customAiCharacterSchema = new mongoose.Schema(
       index: true,
     },
     characterId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Character",
+      type: String,
       required: true,
       index: true,
     },
@@ -69,7 +68,7 @@ customAiCharacterSchema.statics.findOrCreateSession = async function (
   characterId,
   sessionId
 ) {
-  let chat = await this.findOne({ userId, characterId, sessionId });
+  let chat = await this.findOne({ sessionId: sessionId });
 
   if (!chat) {
     chat = await this.create({
