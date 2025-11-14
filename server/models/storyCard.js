@@ -62,9 +62,61 @@ const storyCardSchema = new mongoose.Schema(
         ref: "Nodes",
       },
     ],
+    members: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        role: {
+          type: String,
+          enum: ["owner", "editor", "viewer"],
+          required: true,
+        },
+        joinedAt: {
+          type: Date,
+          default: Date.now,
+        },
+        invitedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+      },
+    ],
+    activeUsers: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        socketId: String,
+        lastSeen: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   { timestamps: true }
 );
+
+storyCardSchema.methods.getUserRole = function (userId) {
+  const member = this.members.find(
+    (m) => m.userId.toString() === userId.toString()
+  );
+
+  return member ? member.role : null;
+};
+
+storyCardSchema.methods.canEdit = function (userId) {
+  const role = this.getUserRole(userId);
+  return role === "owner" || role === "editor";
+};
+
+storyCardSchema.methods.isOwner = function (userId) {
+  return this.user.toString() === userId.toString();
+};
 
 const StoryCards = mongoose.model("StoryCards", storyCardSchema);
 module.exports = StoryCards;
