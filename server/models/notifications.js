@@ -60,7 +60,7 @@ notificationSchema.statics.getUnread = async function (userId) {
     .lean();
 };
 
-notificationSchema.statics.markAsRead = async function (notificationId) {
+notificationSchema.statics.markAsRead = async function (notificationIds) {
   return this.updateMany({ _id: { $in: notificationIds } }, { isRead: true });
 };
 
