@@ -9,6 +9,7 @@ const StoryCards = require("../models/storyCard");
 const StoryMessages = require("../models/storyMessages");
 const PendingChanges = require("../models/pendingChanges");
 const Notifications = require("../models/notifications");
+const { applyApprovedChange } = require("./approvalIntegrationService");
 
 let io = null;
 const clients = new Map();
@@ -473,8 +474,7 @@ const handleReviewChange = async (clientId, data, socket) => {
     let appliedChanges = null;
 
     if (action === "approve") {
-      // 🎯 TODO: Call your existing node/character creation/update functions
-      // Example: await createNode(pendingChange.proposedData);
+      await applyApprovedChange(pendingChanges, socket.id);
       appliedChanges = { id: "temp_id", ...pendingChange.proposedData };
       console.log("✅ Change approved - integrate with your existing logic");
     }
