@@ -435,7 +435,7 @@ const handleReviewChange = async (clientId, data, socket) => {
   const { storyId, changeId, action, comment } = data;
   const client = clients.get(clientId);
 
-  if (!client || client.currentStory !== storyId) {
+  if (!client || client.role !== "owner") {
     socket.emit("review_change_error", {
       message: "Only owners can review changes.",
       code: "OWNERS_ONLY",
@@ -443,13 +443,19 @@ const handleReviewChange = async (clientId, data, socket) => {
     return;
   }
 
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const pendingChanges = await PendingChanges.findById(changeId).populate(
       "proposedBy",
       "username email"
     );
 
-    if (!pendingChanges || pendingChanges.storyId !== "pending") {
+    if (!pendingChanges || pendingChanges.storyId !== storyId) {
+      await session.abortTransaction();
+      session.endSession();
+
       socket.emit("review_change_error", {
         message: "Change not found",
         code: "CHANGE_NOT_FOUND",
@@ -458,6 +464,9 @@ const handleReviewChange = async (clientId, data, socket) => {
     }
 
     if (pendingChanges.status !== "pending") {
+      await session.abortTransaction();
+      session.endSession();
+
       socket.emit("review_change_error", {
         message: "Change has already been reviewed",
         code: "ALREADY_REVIEWED",
@@ -468,16 +477,53 @@ const handleReviewChange = async (clientId, data, socket) => {
     pendingChanges.status = action === "approve" ? "approved" : "rejected";
     pendingChanges.reviewedBy = client.userId;
     pendingChanges.reviewedAt = new Date();
-    pendingChanges.comment = comment || "";
+    pendingChanges.comment = reviewComment || "";
     await pendingChanges.save();
 
     let appliedChanges = null;
 
     if (action === "approve") {
-      await applyApprovedChange(pendingChanges, socket.id);
-      appliedChanges = { id: "temp_id", ...pendingChange.proposedData };
-      console.log("✅ Change approved - integrate with your existing logic");
+      try {
+        console.log(
+          `✅ Applying approved ${pendingChanges.entityType} ${pendingChanges.changeType}...`
+        );
+
+        const result = await applyApprovedChange(pendingChanges, session);
+
+        if (result.success) {
+          appliedChanges = result;
+          console.log("✅ Change applied successfully:", result);
+        } else {
+          throw new Error("Failed to apply approved change");
+        }
+      } catch (applyError) {
+        console.error("❌ Error applying approved change:", applyError);
+
+        session.abortTransaction();
+        session.endSession();
+
+        socket.emit("review_change_error", {
+          message: "Failed to apply approved change",
+          error: applyError.message,
+          code: "APPLICATION_ERROR",
+        });
+
+        await Notifications.create({
+          userId: pendingChanges.proposedBy._id,
+          storyId,
+          type: "change_rejected",
+          title: "Change Application Failed",
+          message: `Your ${pendingChanges.entityType} ${pendingChanges.changeType} was approved but failed to apply: ${applyError.message}`,
+          relatedUser: client.userId,
+          relatedEntity: changeId,
+          actionUrl: `/story/${storyId}`,
+        });
+        return;
+      }
     }
+
+    await session.commitTransaction();
+    session.endSession();
 
     await Notifications.create({
       userId: pendingChanges.proposedBy._id,
@@ -498,11 +544,17 @@ const handleReviewChange = async (clientId, data, socket) => {
     io.to(`story_${storyId}`).emit("change_reviewed", {
       changeId,
       action,
+      changeType: pendingChanges.changeType,
+      entityType: pendingChanges.entityType,
       reviewedBy: {
         id: client.userId,
         username: client.user.username,
       },
-      appliedChange,
+      proposedBy: {
+        id: pendingChanges.proposedBy._id,
+        username: pendingChanges.proposedBy.username,
+      },
+      appliedChanges,
       comment,
       timestamp: new Date().toISOString(),
     });
@@ -517,10 +569,14 @@ const handleReviewChange = async (clientId, data, socket) => {
       `✅ Change ${action}ed by ${client.user.username} in story ${storyId}`
     );
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+
     console.error("Error reviewing change:", error);
     socket.emit("review_change_error", {
       message: "Failed to review change",
       error: error.message,
+      code: "REVIEW_ERROR",
     });
   }
 };
